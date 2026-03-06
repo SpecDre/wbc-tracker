@@ -4,22 +4,74 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>2026 WBC Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #181c27;
+      --surface2: #1e2333;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #f0f2f7;
+      --text2: #8b92a8;
+      --text3: #4a5168;
+      --live: #f04040;
+      --live-bg: rgba(240,64,64,0.08);
+      --live-border: rgba(240,64,64,0.25);
+      --gold: #f5c842;
+      --blue: #4d9ef7;
+      --green: #3ecf8e;
+      --red: #f04040;
+      --pool-a: #f5c842;
+      --pool-b: #4d9ef7;
+      --pool-c: #f04d7a;
+      --pool-d: #3ecf8e;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width:100%; height:100%; background:#0a0a0f; overflow:hidden; }
-    #root { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
-    .scroll-area { flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:14px 14px 40px; }
-    .bracket-scroll { display:flex; gap:12px; overflow-x:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; padding-bottom:16px; }
-    .pool-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    html, body { width:100%; height:100%; background:var(--bg); overflow:hidden; }
+    #root { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; font-family:'IBM Plex Sans', sans-serif; }
+
+    .scroll-area { flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 14px 40px; }
+    .scroll-area::-webkit-scrollbar { width: 3px; }
+    .scroll-area::-webkit-scrollbar-track { background: transparent; }
+    .scroll-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .bracket-scroll { display:flex; gap:10px; overflow-x:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; padding-bottom:16px; }
+    .bracket-scroll::-webkit-scrollbar { height: 3px; }
+    .bracket-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .pool-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     @media(max-width:380px){ .pool-grid{ grid-template-columns:1fr; } }
-    .tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
+
+    .tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; gap:2px; }
     .tabs::-webkit-scrollbar { display:none; }
-    .tab-btn { background:none; border:none; cursor:pointer; padding:8px 16px; font-family:'Courier New',monospace; font-size:11px; letter-spacing:2px; font-weight:700; text-transform:uppercase; white-space:nowrap; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+    .tab-btn {
+      background:none; border:none; cursor:pointer;
+      padding:10px 18px; font-family:'IBM Plex Mono', monospace;
+      font-size:10px; letter-spacing:1.5px; font-weight:600;
+      text-transform:uppercase; white-space:nowrap;
+      -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+      color: var(--text3); border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--gold); }
+
     @keyframes spin { to { transform:rotate(360deg); } }
-    .spinner { width:14px; height:14px; border:2px solid #333; border-top-color:#e8b84b; border-radius:50%; animation:spin 0.8s linear infinite; display:inline-block; }
+    .spinner { width:12px; height:12px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; display:inline-block; }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .live-dot { animation: pulse 1.2s ease-in-out infinite; }
+
+    .section-label {
+      font-family:'IBM Plex Mono', monospace;
+      font-size:9px; letter-spacing:2px; font-weight:600;
+      text-transform:uppercase; color:var(--text3);
+      margin-bottom:8px; padding-bottom:6px;
+      border-bottom: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -28,30 +80,23 @@
 const { useState, useEffect, useRef } = React;
 
 const WBC_TEAMS = {
-  poolA:{ name:"POOL A", location:"San Juan, PR",  teams:["PUR","CAN","COL","CUB","PAN"] },
-  poolB:{ name:"POOL B", location:"Houston, TX",   teams:["USA","MEX","ITA","GBR","BRA"] },
-  poolC:{ name:"POOL C", location:"Tokyo, Japan",  teams:["JPN","KOR","AUS","TPE","CZE"] },
-  poolD:{ name:"POOL D", location:"Miami, FL",     teams:["DOM","VEN","NED","NCA","ISR"] },
+  poolA:{ name:"Pool A", location:"San Juan, PR",  teams:["PUR","CAN","COL","CUB","PAN"], color:"var(--pool-a)" },
+  poolB:{ name:"Pool B", location:"Houston, TX",   teams:["USA","MEX","ITA","GBR","BRA"], color:"var(--pool-b)" },
+  poolC:{ name:"Pool C", location:"Tokyo, Japan",  teams:["JPN","KOR","AUS","TPE","CZE"], color:"var(--pool-c)" },
+  poolD:{ name:"Pool D", location:"Miami, FL",     teams:["DOM","VEN","NED","NCA","ISR"], color:"var(--pool-d)" },
 };
 
 const TEAM_INFO = {
-  PUR:{name:"Puerto Rico",flag:"🇵🇷"}, CAN:{name:"Canada",flag:"🇨🇦"},
-  COL:{name:"Colombia",flag:"🇨🇴"},   CUB:{name:"Cuba",flag:"🇨🇺"},
-  PAN:{name:"Panama",flag:"🇵🇦"},     USA:{name:"USA",flag:"🇺🇸"},
-  MEX:{name:"Mexico",flag:"🇲🇽"},     ITA:{name:"Italy",flag:"🇮🇹"},
+  PUR:{name:"Puerto Rico",flag:"🇵🇷"},  CAN:{name:"Canada",flag:"🇨🇦"},
+  COL:{name:"Colombia",flag:"🇨🇴"},    CUB:{name:"Cuba",flag:"🇨🇺"},
+  PAN:{name:"Panama",flag:"🇵🇦"},      USA:{name:"USA",flag:"🇺🇸"},
+  MEX:{name:"Mexico",flag:"🇲🇽"},      ITA:{name:"Italy",flag:"🇮🇹"},
   GBR:{name:"Gt. Britain",flag:"🇬🇧"}, BRA:{name:"Brazil",flag:"🇧🇷"},
-  JPN:{name:"Japan",flag:"🇯🇵"},      KOR:{name:"Korea",flag:"🇰🇷"},
-  AUS:{name:"Australia",flag:"🇦🇺"},  TPE:{name:"Ch. Taipei",flag:"🇹🇼"},
-  CZE:{name:"Czechia",flag:"🇨🇿"},    DOM:{name:"Dom. Rep.",flag:"🇩🇴"},
-  VEN:{name:"Venezuela",flag:"🇻🇪"},  NED:{name:"Netherlands",flag:"🇳🇱"},
-  NCA:{name:"Nicaragua",flag:"🇳🇮"},  ISR:{name:"Israel",flag:"🇮🇱"},
-};
-
-const POOL_COLORS = {
-  A:{ accent:"#e8b84b", bg:"rgba(232,184,75,0.08)",  border:"rgba(232,184,75,0.3)"  },
-  B:{ accent:"#4b9fe8", bg:"rgba(75,159,232,0.08)",  border:"rgba(75,159,232,0.3)"  },
-  C:{ accent:"#e84b6a", bg:"rgba(232,75,106,0.08)",  border:"rgba(232,75,106,0.3)"  },
-  D:{ accent:"#4be8a0", bg:"rgba(75,232,160,0.08)",  border:"rgba(75,232,160,0.3)"  },
+  JPN:{name:"Japan",flag:"🇯🇵"},       KOR:{name:"Korea",flag:"🇰🇷"},
+  AUS:{name:"Australia",flag:"🇦🇺"},   TPE:{name:"Ch. Taipei",flag:"🇹🇼"},
+  CZE:{name:"Czechia",flag:"🇨🇿"},     DOM:{name:"Dom. Rep.",flag:"🇩🇴"},
+  VEN:{name:"Venezuela",flag:"🇻🇪"},   NED:{name:"Netherlands",flag:"🇳🇱"},
+  NCA:{name:"Nicaragua",flag:"🇳🇮"},   ISR:{name:"Israel",flag:"🇮🇱"},
 };
 
 function computeStandings(games) {
@@ -70,9 +115,14 @@ function computeStandings(games) {
 
 function CountDots({ filled, total, color }) {
   return (
-    <span style={{display:"inline-flex",gap:"2px",alignItems:"center"}}>
+    <span style={{display:"inline-flex",gap:"3px",alignItems:"center"}}>
       {Array.from({length:total}).map((_,i)=>(
-        <span key={i} style={{width:"6px",height:"6px",borderRadius:"50%",background:i<filled?color:"#333",display:"inline-block"}}/>
+        <span key={i} style={{
+          width:"7px",height:"7px",borderRadius:"50%",
+          background:i<filled?color:"rgba(255,255,255,0.08)",
+          display:"inline-block",
+          boxShadow: i<filled ? "0 0 4px "+color+"80" : "none"
+        }}/>
       ))}
     </span>
   );
@@ -91,60 +141,109 @@ function GameRow({ game }) {
   const inningArrow = ls ? (ls.inningHalf==="Top" ? "▲" : "▼") : "";
   const inningLabel = ls ? inningArrow+" "+ls.inningOrdinal : "LIVE";
 
-  // Date + time label for upcoming games
   const dateTimeLabel = (() => {
-    if (!game.startTime) return "TBD";
+    if (!game.startTime) return { date:"TBD", time:"" };
     const d = new Date(game.startTime);
     const month = d.toLocaleDateString([], {month:"short"});
     const day = d.getDate();
-    const time = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    const time = d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
     return { date: month+" "+day, time };
   })();
 
   return (
-    <div style={{background:isLive?"rgba(255,80,80,0.06)":"rgba(255,255,255,0.02)",border:isLive?"1px solid rgba(255,80,80,0.3)":"1px solid rgba(255,255,255,0.06)",borderRadius:"6px",padding:"7px 8px",marginBottom:"5px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:"4px"}}>
-        <div style={{minWidth:"42px",textAlign:"center",flexShrink:0}}>
-          {isLive && <span style={{fontSize:"8px",fontWeight:700,color:"#ff5050",background:"rgba(255,80,80,0.15)",padding:"2px 4px",borderRadius:"3px"}}>{inningLabel}</span>}
-          {isFinal && <span style={{fontSize:"8px",color:"#555"}}>FINAL</span>}
+    <div style={{
+      background: isLive ? "var(--live-bg)" : "var(--surface)",
+      border: "1px solid " + (isLive ? "var(--live-border)" : "var(--border)"),
+      borderRadius:"10px", padding:"10px 12px", marginBottom:"5px",
+      transition:"background 0.2s",
+    }}>
+      {/* Score row */}
+      <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+
+        {/* Status column */}
+        <div style={{width:"46px",flexShrink:0,textAlign:"center"}}>
+          {isLive && (
+            <span style={{
+              fontFamily:"'IBM Plex Mono',monospace",
+              fontSize:"8px",fontWeight:700,color:"var(--live)",
+              background:"var(--live-bg)",border:"1px solid var(--live-border)",
+              padding:"2px 5px",borderRadius:"4px",letterSpacing:"0.5px"
+            }}>{inningLabel}</span>
+          )}
+          {isFinal && (
+            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",letterSpacing:"0.5px"}}>FINAL</span>
+          )}
           {isUpcoming && (
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"0px"}}>
-              <span style={{fontSize:"8px",color:"#e8b84b",fontWeight:700,lineHeight:"1.2"}}>{dateTimeLabel.date}</span>
-              <span style={{fontSize:"7px",color:"#555",lineHeight:"1.2"}}>{dateTimeLabel.time}</span>
+            <div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",fontWeight:600,color:"var(--gold)",lineHeight:"1.3"}}>{dateTimeLabel.date}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",lineHeight:"1.3"}}>{dateTimeLabel.time}</div>
             </div>
           )}
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:"4px",flex:1,minWidth:0}}>
-          <span style={{fontSize:"12px",flexShrink:0}}>{away.flag}</span>
-          <span style={{fontSize:"11px",color:awayWin?"#fff":isFinal?"#666":"#bbb",fontWeight:awayWin?700:400,flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{away.name}</span>
-          {game.awayScore!==null && <span style={{fontWeight:700,fontSize:"15px",color:awayWin?"#fff":"#aaa",flexShrink:0,minWidth:"16px",textAlign:"right"}}>{game.awayScore}</span>}
+
+        {/* Away team */}
+        <div style={{display:"flex",alignItems:"center",gap:"6px",flex:1,minWidth:0}}>
+          <span style={{fontSize:"14px",flexShrink:0}}>{away.flag}</span>
+          <span style={{
+            fontSize:"12px",fontWeight: awayWin?700:500,
+            color: awayWin?"var(--text)":isFinal?"var(--text3)":"var(--text2)",
+            flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"
+          }}>{away.name}</span>
+          {game.awayScore!==null && (
+            <span style={{
+              fontFamily:"'IBM Plex Mono',monospace",
+              fontWeight:700,fontSize:"18px",
+              color:awayWin?"var(--text)":"var(--text2)",
+              flexShrink:0,minWidth:"20px",textAlign:"right",lineHeight:1
+            }}>{game.awayScore}</span>
+          )}
         </div>
-        <span style={{color:"#333",fontSize:"10px",flexShrink:0,padding:"0 3px"}}>–</span>
-        <div style={{display:"flex",alignItems:"center",gap:"4px",flex:1,minWidth:0,justifyContent:"flex-end"}}>
-          {game.homeScore!==null && <span style={{fontWeight:700,fontSize:"15px",color:homeWin?"#fff":"#aaa",flexShrink:0,minWidth:"16px",textAlign:"left"}}>{game.homeScore}</span>}
-          <span style={{fontSize:"11px",color:homeWin?"#fff":isFinal?"#666":"#bbb",fontWeight:homeWin?700:400,flex:1,textAlign:"right",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{home.name}</span>
-          <span style={{fontSize:"12px",flexShrink:0}}>{home.flag}</span>
+
+        {/* Divider */}
+        <span style={{color:"var(--text3)",fontSize:"12px",flexShrink:0,fontFamily:"'IBM Plex Mono',monospace"}}>–</span>
+
+        {/* Home team */}
+        <div style={{display:"flex",alignItems:"center",gap:"6px",flex:1,minWidth:0,justifyContent:"flex-end"}}>
+          {game.homeScore!==null && (
+            <span style={{
+              fontFamily:"'IBM Plex Mono',monospace",
+              fontWeight:700,fontSize:"18px",
+              color:homeWin?"var(--text)":"var(--text2)",
+              flexShrink:0,minWidth:"20px",textAlign:"left",lineHeight:1
+            }}>{game.homeScore}</span>
+          )}
+          <span style={{
+            fontSize:"12px",fontWeight:homeWin?700:500,
+            color:homeWin?"var(--text)":isFinal?"var(--text3)":"var(--text2)",
+            flex:1,textAlign:"right",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"
+          }}>{home.name}</span>
+          <span style={{fontSize:"14px",flexShrink:0}}>{home.flag}</span>
         </div>
       </div>
+
+      {/* Live detail row */}
       {isLive && ls && (
-        <div style={{marginTop:"6px",paddingTop:"6px",borderTop:"1px solid rgba(255,80,80,0.12)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"4px"}}>
-          <div style={{display:"flex",gap:"8px",alignItems:"center"}}>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
-              <span style={{fontSize:"7px",color:"#555",letterSpacing:"1px"}}>OUTS</span>
-              <CountDots filled={ls.outs||0} total={3} color="#ff5050"/>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
-              <span style={{fontSize:"7px",color:"#555",letterSpacing:"1px"}}>BALLS</span>
-              <CountDots filled={ls.balls||0} total={4} color="#4caf50"/>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
-              <span style={{fontSize:"7px",color:"#555",letterSpacing:"1px"}}>STRIKES</span>
-              <CountDots filled={ls.strikes||0} total={3} color="#ffcc00"/>
-            </div>
+        <div style={{
+          marginTop:"8px",paddingTop:"8px",
+          borderTop:"1px solid var(--live-border)",
+          display:"flex",alignItems:"center",justifyContent:"space-between",
+          flexWrap:"wrap",gap:"6px"
+        }}>
+          <div style={{display:"flex",gap:"14px",alignItems:"center"}}>
+            {[
+              {label:"OUTS", filled:ls.outs||0, total:3, color:"var(--live)"},
+              {label:"BALLS", filled:ls.balls||0, total:4, color:"var(--green)"},
+              {label:"STRIKES", filled:ls.strikes||0, total:3, color:"var(--gold)"},
+            ].map(({label,filled,total,color})=>(
+              <div key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px"}}>
+                <CountDots filled={filled} total={total} color={color}/>
+                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color:"var(--text3)",letterSpacing:"1px"}}>{label}</span>
+              </div>
+            ))}
           </div>
-          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"1px",minWidth:0}}>
-            {ls.batter && <span style={{fontSize:"8px",color:"#888",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"140px"}}>🏏 {ls.batter.split(" ").pop()}</span>}
-            {ls.pitcher && <span style={{fontSize:"8px",color:"#666",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"140px"}}>⚾ {ls.pitcher.split(" ").pop()}</span>}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"2px"}}>
+            {ls.batter && <span style={{fontSize:"10px",color:"var(--text2)"}}>🏏 <strong style={{color:"var(--text)"}}>{ls.batter.split(" ").pop()}</strong></span>}
+            {ls.pitcher && <span style={{fontSize:"10px",color:"var(--text3)"}}>⚾ {ls.pitcher.split(" ").pop()}</span>}
           </div>
         </div>
       )}
@@ -153,28 +252,75 @@ function GameRow({ game }) {
 }
 
 function PoolCard({ poolKey, pool, records }) {
-  const colors = POOL_COLORS[poolKey];
-  const sorted = [...pool.teams].sort((a,b)=>{ const ra=records[a]||{w:0,l:0}, rb=records[b]||{w:0,l:0}; return rb.w-ra.w || ra.l-rb.l; });
+  const colorVar = pool.color;
+  const sorted = [...pool.teams].sort((a,b)=>{
+    const ra=records[a]||{w:0,l:0}, rb=records[b]||{w:0,l:0};
+    return rb.w-ra.w || ra.l-rb.l;
+  });
   return (
-    <div style={{background:colors.bg,border:"1px solid "+colors.border,borderRadius:"10px",overflow:"hidden"}}>
-      <div style={{padding:"8px 10px",borderBottom:"1px solid "+colors.border,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{
+      background:"var(--surface)",border:"1px solid var(--border)",
+      borderRadius:"12px",overflow:"hidden"
+    }}>
+      {/* Pool header */}
+      <div style={{
+        padding:"9px 12px",
+        borderBottom:"1px solid var(--border)",
+        display:"flex",justifyContent:"space-between",alignItems:"center",
+        background:"var(--surface2)"
+      }}>
         <div>
-          <div style={{fontWeight:800,fontSize:"11px",color:colors.accent,letterSpacing:"1px"}}>{pool.name}</div>
-          <div style={{fontSize:"8px",color:"#444",marginTop:"1px"}}>{pool.location}</div>
+          <div style={{
+            fontFamily:"'IBM Plex Mono',monospace",
+            fontWeight:700,fontSize:"11px",color:colorVar,letterSpacing:"1px"
+          }}>{pool.name.toUpperCase()}</div>
+          <div style={{fontSize:"9px",color:"var(--text3)",marginTop:"1px"}}>{pool.location}</div>
         </div>
-        <span style={{fontSize:"8px",color:"#444"}}>W–L</span>
+        <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)"}}>W–L</span>
       </div>
-      {sorted.map((t,i)=>{ const r=records[t]||{w:0,l:0}; const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; const isAdv=i<2; return (
-        <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 10px",background:isAdv?"rgba(255,255,255,0.025)":"transparent",borderBottom:i<sorted.length-1?"1px solid rgba(255,255,255,0.04)":"none"}}>
-          <div style={{display:"flex",alignItems:"center",gap:"5px",minWidth:0,flex:1}}>
-            <span style={{fontSize:"9px",color:"#333",flexShrink:0}}>{i+1}</span>
-            <span style={{fontSize:"12px",flexShrink:0}}>{info.flag}</span>
-            <span style={{fontSize:"11px",color:isAdv?"#ddd":"#666",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</span>
-            {isAdv && r.w>0 && <span style={{fontSize:"6px",color:colors.accent,border:"1px solid "+colors.border,padding:"1px 3px",borderRadius:"3px",flexShrink:0,marginLeft:"2px"}}>ADV</span>}
+      {/* Teams */}
+      {sorted.map((t,i)=>{
+        const r=records[t]||{w:0,l:0};
+        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
+        const isAdv=i<2;
+        const isFirst=i===0;
+        return (
+          <div key={t} style={{
+            display:"flex",alignItems:"center",justifyContent:"space-between",
+            padding:"7px 12px",
+            background: isFirst && r.w>0 ? "rgba(255,255,255,0.025)" : "transparent",
+            borderBottom:i<sorted.length-1?"1px solid var(--border)":"none"
+          }}>
+            <div style={{display:"flex",alignItems:"center",gap:"7px",minWidth:0,flex:1}}>
+              <span style={{
+                fontFamily:"'IBM Plex Mono',monospace",
+                fontSize:"9px",color:"var(--text3)",flexShrink:0,width:"10px"
+              }}>{i+1}</span>
+              <span style={{fontSize:"13px",flexShrink:0}}>{info.flag}</span>
+              <span style={{
+                fontSize:"11px",fontWeight:isAdv?600:400,
+                color:isAdv?"var(--text)":"var(--text3)",
+                whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"
+              }}>{info.name}</span>
+              {isAdv && r.w>0 && (
+                <span style={{
+                  fontFamily:"'IBM Plex Mono',monospace",
+                  fontSize:"7px",color:colorVar,
+                  border:"1px solid "+colorVar,
+                  padding:"1px 4px",borderRadius:"3px",flexShrink:0,
+                  opacity:0.8
+                }}>ADV</span>
+              )}
+            </div>
+            <span style={{
+              fontFamily:"'IBM Plex Mono',monospace",
+              fontWeight:700,fontSize:"11px",
+              color:r.w>0?colorVar:"var(--text3)",
+              flexShrink:0,marginLeft:"8px"
+            }}>{r.w}–{r.l}</span>
           </div>
-          <span style={{fontWeight:700,fontSize:"11px",color:r.w>0?colors.accent:"#333",flexShrink:0,marginLeft:"6px"}}>{r.w}–{r.l}</span>
-        </div>
-      );})}
+        );
+      })}
     </div>
   );
 }
@@ -184,7 +330,6 @@ function App() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [pulse, setPulse] = useState(true);
   const intervalRef = useRef(null);
 
   async function fetchScores() {
@@ -192,7 +337,7 @@ function App() {
       const res = await fetch("/api/scores");
       const data = await res.json();
       if (data.games) { setGames(data.games); setLastUpdate(new Date()); }
-    } catch(e) { console.error("Failed to fetch scores", e); }
+    } catch(e) {}
     finally { setLoading(false); }
   }
 
@@ -201,94 +346,217 @@ function App() {
     intervalRef.current = setInterval(fetchScores, 10000);
     return () => clearInterval(intervalRef.current);
   }, []);
-  useEffect(() => { const iv = setInterval(() => setPulse(p=>!p), 800); return () => clearInterval(iv); }, []);
 
   const records = computeStandings(games);
   const liveGames = games.filter(g=>g.status==="live");
   const finalGames = games.filter(g=>g.status==="final");
   const upcomingGames = games.filter(g=>g.status==="upcoming");
-  const timeAgo = lastUpdate ? Math.floor((Date.now()-lastUpdate)/1000)+"s ago" : "loading...";
+  const timeAgo = lastUpdate ? Math.floor((Date.now()-lastUpdate)/1000)+"s" : "–";
+  const hasLive = liveGames.length > 0;
 
   return (
-    <div style={{fontFamily:"'Courier New',Courier,monospace",background:"#0a0a0f",height:"100%",display:"flex",flexDirection:"column",color:"#ddd"}}>
-      <div style={{background:"linear-gradient(135deg,#0d1117,#0a0f1e)",borderBottom:"1px solid rgba(255,255,255,0.08)",padding:"12px 14px 0",flexShrink:0}}>
+    <div style={{background:"var(--bg)",height:"100%",display:"flex",flexDirection:"column",color:"var(--text)"}}>
+
+      {/* Header */}
+      <div style={{
+        background:"var(--surface2)",
+        borderBottom:"1px solid var(--border2)",
+        padding:"12px 16px 0",flexShrink:0
+      }}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
-          <div>
-            <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
-              <span style={{fontSize:"16px"}}>⚾</span>
-              <span style={{fontSize:"16px",fontWeight:900,letterSpacing:"2px",background:"linear-gradient(90deg,#e8b84b,#fff,#4b9fe8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>2026 WBC</span>
+          {/* Title */}
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            <span style={{fontSize:"20px"}}>⚾</span>
+            <div>
+              <div style={{
+                fontFamily:"'IBM Plex Mono',monospace",
+                fontSize:"15px",fontWeight:700,letterSpacing:"2px",color:"var(--text)"
+              }}>2026 WBC</div>
+              <div style={{fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginTop:"1px",fontFamily:"'IBM Plex Mono',monospace"}}>WORLD BASEBALL CLASSIC</div>
             </div>
-            <div style={{fontSize:"8px",color:"#444",letterSpacing:"2px",marginTop:"1px"}}>WORLD BASEBALL CLASSIC</div>
           </div>
+
+          {/* Status */}
           <div style={{textAlign:"right"}}>
             {loading ? (
-              <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}><div className="spinner"/><span style={{fontSize:"9px",color:"#555"}}>Loading...</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}>
+                <div className="spinner"/>
+                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)"}}>Loading…</span>
+              </div>
             ) : (
-              <div style={{display:"flex",alignItems:"center",gap:"5px",justifyContent:"flex-end"}}>
-                <span style={{width:"6px",height:"6px",borderRadius:"50%",background:liveGames.length>0?(pulse?"#ff5050":"#330000"):"#333",display:"inline-block",transition:"background 0.3s",flexShrink:0}}/>
-                <span style={{fontSize:"10px",color:liveGames.length>0?"#ff5050":"#555",fontWeight:700,letterSpacing:"1px"}}>{liveGames.length>0 ? liveGames.length+" LIVE" : "NO LIVE GAMES"}</span>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}>
+                <span className={hasLive?"live-dot":""} style={{
+                  width:"7px",height:"7px",borderRadius:"50%",
+                  background:hasLive?"var(--live)":"var(--text3)",
+                  display:"inline-block",flexShrink:0,
+                  boxShadow:hasLive?"0 0 6px var(--live)":"none"
+                }}/>
+                <span style={{
+                  fontFamily:"'IBM Plex Mono',monospace",
+                  fontSize:"10px",fontWeight:700,letterSpacing:"1px",
+                  color:hasLive?"var(--live)":"var(--text3)"
+                }}>{hasLive?liveGames.length+" LIVE":"NO LIVE GAMES"}</span>
               </div>
             )}
-            <div style={{fontSize:"8px",color:"#333",marginTop:"2px"}}>Updated {timeAgo}</div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",marginTop:"3px"}}>
+              Updated {timeAgo} ago
+            </div>
           </div>
         </div>
+
+        {/* Tabs */}
         <div className="tabs">
           {["standings","scores","bracket"].map(tab=>(
-            <button key={tab} className="tab-btn" onClick={()=>setActiveTab(tab)} style={{color:activeTab===tab?"#fff":"#555",borderBottom:activeTab===tab?"2px solid #e8b84b":"2px solid transparent"}}>{tab}</button>
+            <button key={tab} className={"tab-btn"+(activeTab===tab?" active":"")} onClick={()=>setActiveTab(tab)}>{tab}</button>
           ))}
         </div>
       </div>
 
+      {/* Content */}
       <div className="scroll-area">
+
+        {/* STANDINGS */}
         {activeTab==="standings" && (
           <div>
-            {liveGames.length>0 && (<div style={{marginBottom:"18px"}}><div style={{fontSize:"8px",color:"#ff5050",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>● LIVE NOW</div>{liveGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>)}
-            <div style={{fontSize:"8px",color:"#444",fontWeight:700,letterSpacing:"2px",marginBottom:"10px"}}>POOL STANDINGS — TOP 2 ADVANCE</div>
-            <div className="pool-grid">{Object.entries(WBC_TEAMS).map(([key,pool])=>(<PoolCard key={key} poolKey={key.replace("pool","").toUpperCase()} pool={pool} records={records}/>))}</div>
+            {liveGames.length>0 && (
+              <div style={{marginBottom:"16px"}}>
+                <div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>
+                {liveGames.map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            <div className="section-label">Pool Standings — Top 2 Advance</div>
+            <div className="pool-grid">
+              {Object.entries(WBC_TEAMS).map(([key,pool])=>(
+                <PoolCard key={key} poolKey={key.replace("pool","").toUpperCase()} pool={pool} records={records}/>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* SCORES */}
         {activeTab==="scores" && (
           <div>
-            {liveGames.length>0 && (<div style={{marginBottom:"18px"}}><div style={{fontSize:"8px",color:"#ff5050",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>● LIVE NOW</div>{liveGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>)}
-            {finalGames.length>0 && (<div style={{marginBottom:"18px"}}><div style={{fontSize:"8px",color:"#555",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>COMPLETED</div>{[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g}/>)}</div>)}
-            {upcomingGames.length>0 && (<div><div style={{fontSize:"8px",color:"#444",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>UPCOMING</div>{upcomingGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>)}
-            {games.length===0 && !loading && (<div style={{textAlign:"center",marginTop:"40px"}}><div style={{color:"#555",fontSize:"12px",marginBottom:"8px"}}>No WBC games found.</div></div>)}
+            {liveGames.length>0 && (
+              <div style={{marginBottom:"16px"}}>
+                <div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>
+                {liveGames.map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            {finalGames.length>0 && (
+              <div style={{marginBottom:"16px"}}>
+                <div className="section-label">Completed</div>
+                {[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            {upcomingGames.length>0 && (
+              <div>
+                <div className="section-label">Upcoming</div>
+                {upcomingGames.map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            {games.length===0 && !loading && (
+              <div style={{textAlign:"center",marginTop:"60px",color:"var(--text3)",fontSize:"13px"}}>No games found.</div>
+            )}
           </div>
         )}
+
+        {/* BRACKET */}
         {activeTab==="bracket" && (
           <div>
-            <div style={{fontSize:"8px",color:"#555",fontWeight:700,letterSpacing:"2px",marginBottom:"10px"}}>← SWIPE TO SEE FULL BRACKET →</div>
+            <div className="section-label">← Swipe for full bracket →</div>
             <div className="bracket-scroll">
-              <div style={{minWidth:"155px",flexShrink:0}}>
-                <div style={{fontSize:"8px",color:"#666",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>POOL PLAY</div>
-                {Object.entries(WBC_TEAMS).map(([key,pool])=>{ const pl=key.replace("pool","").toUpperCase(); const colors=POOL_COLORS[pl]; const sorted=[...pool.teams].sort((a,b)=>((records[b]||{w:0}).w-(records[a]||{w:0}).w)); return (
-                  <div key={key} style={{marginBottom:"10px"}}>
-                    <div style={{fontSize:"7px",color:colors.accent,fontWeight:700,letterSpacing:"1px",marginBottom:"3px"}}>{pool.name}</div>
-                    {sorted.slice(0,2).map(t=>{ const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; const r=records[t]||{w:0,l:0}; return (<div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 7px",marginBottom:"2px",background:colors.bg,border:"1px solid "+colors.border,borderRadius:"5px"}}><div style={{display:"flex",alignItems:"center",gap:"3px"}}><span style={{fontSize:"10px"}}>{info.flag}</span><span style={{fontSize:"9px",color:"#bbb"}}>{info.name}</span></div><span style={{fontSize:"9px",color:colors.accent,fontWeight:700}}>{r.w}–{r.l}</span></div>);})}
-                    {sorted.slice(2).map(t=>{ const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; return (<div key={t} style={{display:"flex",alignItems:"center",gap:"3px",padding:"3px 7px",opacity:0.3}}><span style={{fontSize:"9px"}}>{info.flag}</span><span style={{fontSize:"9px",color:"#555"}}>{info.name}</span></div>);})}
-                  </div>
-                );})}
+
+              {/* Pool Play */}
+              <div style={{minWidth:"160px",flexShrink:0}}>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>POOL PLAY</div>
+                {Object.entries(WBC_TEAMS).map(([key,pool])=>{
+                  const sorted=[...pool.teams].sort((a,b)=>((records[b]||{w:0}).w-(records[a]||{w:0}).w));
+                  return (
+                    <div key={key} style={{marginBottom:"10px"}}>
+                      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:pool.color,fontWeight:700,letterSpacing:"1px",marginBottom:"4px"}}>{pool.name.toUpperCase()}</div>
+                      {sorted.slice(0,2).map(t=>{
+                        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
+                        const r=records[t]||{w:0,l:0};
+                        return (
+                          <div key={t} style={{
+                            display:"flex",alignItems:"center",justifyContent:"space-between",
+                            padding:"5px 8px",marginBottom:"3px",
+                            background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"6px"
+                          }}>
+                            <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
+                              <span style={{fontSize:"11px"}}>{info.flag}</span>
+                              <span style={{fontSize:"10px",color:"var(--text2)",fontWeight:500}}>{info.name}</span>
+                            </div>
+                            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:pool.color,fontWeight:700}}>{r.w}–{r.l}</span>
+                          </div>
+                        );
+                      })}
+                      {sorted.slice(2).map(t=>{
+                        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
+                        return (
+                          <div key={t} style={{display:"flex",alignItems:"center",gap:"5px",padding:"3px 8px",opacity:0.25}}>
+                            <span style={{fontSize:"10px"}}>{info.flag}</span>
+                            <span style={{fontSize:"10px",color:"var(--text3)"}}>{info.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
-              <div style={{display:"flex",alignItems:"center",color:"#333",fontSize:"16px",flexShrink:0}}>→</div>
+
+              <div style={{display:"flex",alignItems:"center",color:"var(--text3)",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
+
+              {/* QF */}
               <div style={{minWidth:"150px",flexShrink:0}}>
-                <div style={{fontSize:"8px",color:"#777",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>QUARTERFINALS<br/><span style={{color:"#444",fontWeight:400}}>MAR 13–14</span></div>
-                {["📍 HOUSTON","📍 MIAMI"].map((city,ci)=>(<div key={ci} style={{marginBottom:"12px"}}><div style={{fontSize:"7px",color:"#444",letterSpacing:"1px",marginBottom:"4px"}}>{city}</div>{[1,2].map(n=>(<div key={n} style={{padding:"6px 8px",marginBottom:"3px",background:"rgba(255,255,255,0.03)",border:"1px dashed rgba(255,255,255,0.1)",borderRadius:"5px",fontSize:"9px",color:"#444"}}>🏟️ TBD vs TBD</div>))}</div>))}
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>QUARTERFINALS<br/><span style={{color:"var(--text3)",fontWeight:400,fontSize:"8px"}}>MAR 13–14</span></div>
+                {["Houston, TX","Miami, FL"].map((city,ci)=>(
+                  <div key={ci} style={{marginBottom:"12px"}}>
+                    <div style={{fontSize:"8px",color:"var(--text3)",marginBottom:"4px",paddingLeft:"2px"}}>📍 {city}</div>
+                    {[1,2].map(n=>(
+                      <div key={n} style={{padding:"7px 10px",marginBottom:"3px",background:"var(--surface)",border:"1px dashed var(--border2)",borderRadius:"6px",fontSize:"10px",color:"var(--text3)"}}>
+                        TBD vs TBD
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
-              <div style={{display:"flex",alignItems:"center",color:"#333",fontSize:"16px",flexShrink:0}}>→</div>
+
+              <div style={{display:"flex",alignItems:"center",color:"var(--text3)",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
+
+              {/* SF */}
               <div style={{minWidth:"140px",flexShrink:0}}>
-                <div style={{fontSize:"8px",color:"#777",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>SEMIFINALS<br/><span style={{color:"#444",fontWeight:400}}>MAR 15–16 · MIAMI</span></div>
-                {[1,2].map(n=>(<div key={n} style={{padding:"8px",marginBottom:"5px",background:"rgba(255,255,255,0.03)",border:"1px dashed rgba(255,255,255,0.1)",borderRadius:"5px",fontSize:"9px",color:"#444"}}>⚾ TBD vs TBD</div>))}
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>SEMIFINALS<br/><span style={{fontWeight:400,fontSize:"8px"}}>MAR 15–16 · MIAMI</span></div>
+                {[1,2].map(n=>(
+                  <div key={n} style={{padding:"9px 10px",marginBottom:"5px",background:"var(--surface)",border:"1px dashed var(--border2)",borderRadius:"6px",fontSize:"10px",color:"var(--text3)"}}>
+                    TBD vs TBD
+                  </div>
+                ))}
               </div>
-              <div style={{display:"flex",alignItems:"center",color:"#333",fontSize:"16px",flexShrink:0}}>→</div>
+
+              <div style={{display:"flex",alignItems:"center",color:"var(--text3)",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
+
+              {/* Final */}
               <div style={{minWidth:"130px",flexShrink:0}}>
-                <div style={{fontSize:"8px",color:"#e8b84b",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>CHAMPIONSHIP<br/><span style={{color:"#553d00",fontWeight:400}}>MAR 17 · MIAMI</span></div>
-                <div style={{padding:"16px 12px",textAlign:"center",background:"rgba(232,184,75,0.06)",border:"1px solid rgba(232,184,75,0.2)",borderRadius:"8px"}}><div style={{fontSize:"24px",marginBottom:"6px"}}>🏆</div><div style={{fontSize:"9px",color:"#554400",letterSpacing:"1px"}}>CHAMPION</div><div style={{fontSize:"9px",color:"#333",marginTop:"4px"}}>TBD</div></div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--gold)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:700}}>CHAMPIONSHIP<br/><span style={{color:"var(--text3)",fontWeight:400,fontSize:"8px"}}>MAR 17 · MIAMI</span></div>
+                <div style={{
+                  padding:"20px 12px",textAlign:"center",
+                  background:"linear-gradient(135deg, rgba(245,200,66,0.08), rgba(245,200,66,0.03))",
+                  border:"1px solid rgba(245,200,66,0.2)",borderRadius:"10px"
+                }}>
+                  <div style={{fontSize:"28px",marginBottom:"8px"}}>🏆</div>
+                  <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--gold)",letterSpacing:"2px",fontWeight:700}}>CHAMPION</div>
+                  <div style={{fontSize:"10px",color:"var(--text3)",marginTop:"4px"}}>TBD</div>
+                </div>
               </div>
             </div>
           </div>
         )}
-        <div style={{marginTop:"18px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)",textAlign:"center"}}>
-          <span onClick={fetchScores} style={{fontSize:"8px",color:"#2a2a2a",letterSpacing:"1px",cursor:"pointer"}}>AUTO-REFRESHES EVERY 10s · TAP TO FORCE REFRESH</span>
+
+        <div style={{marginTop:"20px",textAlign:"center"}} onClick={fetchScores}>
+          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",letterSpacing:"1px",cursor:"pointer",opacity:0.5}}>
+            AUTO-REFRESHES EVERY 10s · TAP TO REFRESH
+          </span>
         </div>
       </div>
     </div>
