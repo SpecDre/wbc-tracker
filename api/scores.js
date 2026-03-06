@@ -1,87 +1,78 @@
-const WBC_TEAMS = new Set([
-  "PUR","CAN","COL","CUB","PAN",
-  "USA","MEX","ITA","GBR","BRA",
-  "JPN","KOR","AUS","TPE","CZE",
-  "DOM","VEN","NED","NCA","ISR"
-]);
-
-const POOL_MAP = {
-  PUR:"A", CAN:"A", COL:"A", CUB:"A", PAN:"A",
-  USA:"B", MEX:"B", ITA:"B", GBR:"B", BRA:"B",
-  JPN:"C", KOR:"C", AUS:"C", TPE:"C", CZE:"C",
-  DOM:"D", VEN:"D", NED:"D", NCA:"D", ISR:"D",
+const NAME_TO_ABB = {
+    "puerto rico":"PUR","canada":"CAN","colombia":"COL","cuba":"CUB","panama":"PAN",
+    "united states":"USA","usa":"USA","u.s.a.":"USA","mexico":"MEX","italy":"ITA",
+    "great britain":"GBR","brazil":"BRA","japan":"JPN","south korea":"KOR","korea":"KOR",
+    "australia":"AUS","chinese taipei":"TPE","taiwan":"TPE","czech republic":"CZE","czechia":"CZE",
+    "dominican republic":"DOM","venezuela":"VEN","netherlands":"NED","nicaragua":"NCA","israel":"ISR",
 };
 
-// Date range for the WBC tournament
-function getWbcDates() {
-  const dates = [];
-  const start = new Date("2026-03-05");
-  const end   = new Date("2026-03-17");
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().split("T")[0]);
-  }
-  return dates;
+const POOL_MAP = {
+    PUR:"A",CAN:"A",COL:"A",CUB:"A",PAN:"A",
+    USA:"B",MEX:"B",ITA:"B",GBR:"B",BRA:"B",
+    JPN:"C",KOR:"C",AUS:"C",TPE:"C",CZE:"C",
+    DOM:"D",VEN:"D",NED:"D",NCA:"D",ISR:"D",
+};
+
+function toAbb(name, abbr) {
+    if (abbr && POOL_MAP[abbr]) return abbr;
+    if (!name) return null;
+    return NAME_TO_ABB[name.toLowerCase().trim()] || null;
 }
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
 
   try {
-    // Fetch scores from the public MLB Stats API (no key needed)
-    const dates = getWbcDates();
-    const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toISOString().split("T")[0];
+        const allGames = [];
+        const seen = new Set();
 
-    // Focus on today ± 1 day to keep it fast
-    const relevantDates = dates.filter(d => {
-      const diff = (new Date(d) - new Date(today)) / 86400000;
-      return diff >= -3 && diff <= 3;
-    });
+      // Try every known sportId and leagueId that might cover WBC
+      const urls = [
+              `https://statsapi.mlb.com/api/v1/schedule?sportId=51&startDate=2026-03-05&endDate=2026-03-17&hydrate=team,linescore`,
+              `https://statsapi.mlb.com/api/v1/schedule?sportId=23&startDate=2026-03-05&endDate=2026-03-17&hydrate=team,linescore`,
+              `https://statsapi.mlb.com/api/v1/schedule?sportId=17&startDate=2026-03-05&endDate=2026-03-17&hydrate=team,linescore`,
+              `https://statsapi.mlb.com/api/v1/schedule?sportId=1&gameType=W&startDate=2026-03-05&endDate=2026-03-17&hydrate=team,linescore`,
+              `https://statsapi.mlb.com/api/v1/schedule?leagueId=159&startDate=2026-03-05&endDate=2026-03-17&hydrate=team,linescore`,
+              `https://statsapi.mlb.com/api/v1/schedule?leagueId=160&startDate=2026-03-05&endDate=2026-03-17&hydrate=team,linescore`,
+              `https://statsapi.mlb.com/api/v1/schedule?sportId=51&date=${today}&hydrate=team,linescore`,
+            ];
 
-    const allGames = [];
-
-    await Promise.all(relevantDates.map(async (date) => {
-      try {
-        const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${date}&hydrate=team,linescore`;
-        const r = await fetch(url);
-        const data = await r.json();
-        const dates = data.dates || [];
-        for (const d of dates) {
-          for (const game of (d.games || [])) {
-            const away = game.teams?.away?.team?.abbreviation;
-            const home = game.teams?.home?.team?.abbreviation;
-            if (!WBC_TEAMS.has(away) || !WBC_TEAMS.has(home)) continue;
-
-            const status = game.status?.abstractGameState; // "Preview", "Live", "Final"
-            const awayScore = game.teams?.away?.score ?? null;
-            const homeScore = game.teams?.home?.score ?? null;
-
-            let gameStatus = "upcoming";
-            if (status === "Final") gameStatus = "final";
-            else if (status === "Live") gameStatus = "live";
-
-            allGames.push({
-              id: game.gamePk,
-              away,
-              home,
-              awayScore: awayScore !== undefined ? awayScore : null,
-              homeScore: homeScore !== undefined ? homeScore : null,
-              status: gameStatus,
-              startTime: game.gameDate,
-              pool: POOL_MAP[away] || "?",
-            });
-          }
-        }
-      } catch (e) {
-        // skip failed dates silently
+      for (const url of urls) {
+              try {
+                        const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+                        if (!r.ok) continue;
+                        const data = await r.json();
+                        for (const d of (data.dates || [])) {
+                                    for (const game of (d.games || [])) {
+                                                  const awayRaw = game.teams?.away?.team;
+                                                  const homeRaw = game.teams?.home?.team;
+                                                  const away = toAbb(awayRaw?.name, awayRaw?.abbreviation);
+                                                  const home = toAbb(homeRaw?.name, homeRaw?.abbreviation);
+                                                  if (!away || !home || !POOL_MAP[away] || !POOL_MAP[home]) continue;
+                                                  const key = `${away}-${home}-${(game.gameDate||"").split("T")[0]}`;
+                                                  if (seen.has(key)) continue;
+                                                  seen.add(key);
+                                                  const abs = game.status?.abstractGameState;
+                                                  const det = game.status?.detailedState || "";
+                                                  let status = "upcoming";
+                                                  if (abs === "Final") status = "final";
+                                                  else if (abs === "Live" || det.includes("Progress")) status = "live";
+                                                  allGames.push({
+                                                                  id: game.gamePk, away, home,
+                                                                  awayScore: status !== "upcoming" ? (game.teams?.away?.score ?? null) : null,
+                                                                  homeScore: status !== "upcoming" ? (game.teams?.home?.score ?? null) : null,
+                                                                  status, startTime: game.gameDate, pool: POOL_MAP[away],
+                                                  });
+                                    }
+                        }
+              } catch(e) {}
       }
-    }));
 
-    // Sort by start time
-    allGames.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-
-    res.status(200).json({ games: allGames, fetchedAt: new Date().toISOString() });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+      allGames.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+        res.status(200).json({ games: allGames, count: allGames.length, fetchedAt: new Date().toISOString(), today });
+  } catch(err) {
+        res.status(500).json({ error: err.message });
   }
 }
