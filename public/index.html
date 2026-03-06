@@ -10,67 +10,55 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     :root {
-      --bg: #1a1f2e;
-      --surface: #242938;
-      --surface2: #2c3347;
-      --border: rgba(255,255,255,0.10);
-      --border2: rgba(255,255,255,0.18);
+      --bg: #252d42;
+      --surface: #2e3750;
+      --surface2: #38425e;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
       --text: #ffffff;
-      --text2: #c8cedd;
-      --text3: #8892a8;
-      --live: #ff5555;
-      --live-bg: rgba(255,85,85,0.10);
-      --live-border: rgba(255,85,85,0.30);
+      --text2: #e2e8f5;
+      --text3: #b8c2d8;
+      --live: #ff6060;
+      --live-bg: rgba(255,96,96,0.12);
+      --live-border: rgba(255,96,96,0.35);
       --gold: #f5c842;
-      --blue: #4d9ef7;
       --green: #3ecf8e;
-      --red: #ff5555;
       --pool-a: #f5c842;
-      --pool-b: #4d9ef7;
-      --pool-c: #f04d7a;
+      --pool-b: #6ab4ff;
+      --pool-c: #ff6b92;
       --pool-d: #3ecf8e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width:100%; height:100%; background:var(--bg); overflow:hidden; }
     #root { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; font-family:'IBM Plex Sans', sans-serif; }
-
     .scroll-area { flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 14px 40px; }
-    .scroll-area::-webkit-scrollbar { width: 3px; }
-    .scroll-area::-webkit-scrollbar-track { background: transparent; }
-    .scroll-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-    .bracket-scroll { display:flex; gap:10px; overflow-x:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; padding-bottom:16px; }
-    .bracket-scroll::-webkit-scrollbar { height: 3px; }
-    .bracket-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
+    .scroll-area::-webkit-scrollbar { width:3px; }
+    .scroll-area::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+    .bracket-scroll { display:flex; gap:10px; overflow-x:scroll; -webkit-overflow-scrolling:touch; padding-bottom:16px; }
+    .bracket-scroll::-webkit-scrollbar { height:3px; }
+    .bracket-scroll::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
     .pool-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     @media(max-width:380px){ .pool-grid{ grid-template-columns:1fr; } }
-
-    .tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; gap:2px; }
+    .tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
     .tabs::-webkit-scrollbar { display:none; }
     .tab-btn {
       background:none; border:none; cursor:pointer;
-      padding:10px 18px; font-family:'IBM Plex Mono', monospace;
+      padding:10px 18px; font-family:'IBM Plex Mono',monospace;
       font-size:10px; letter-spacing:1.5px; font-weight:600;
       text-transform:uppercase; white-space:nowrap;
-      -webkit-tap-highlight-color:transparent; touch-action:manipulation;
-      color: var(--text3); border-bottom: 2px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color:transparent;
+      color:var(--text3); border-bottom:2px solid transparent;
+      transition:color 0.15s, border-color 0.15s;
     }
-    .tab-btn.active { color: var(--text); border-bottom-color: var(--gold); }
-
+    .tab-btn.active { color:#fff; border-bottom-color:var(--gold); }
     @keyframes spin { to { transform:rotate(360deg); } }
     .spinner { width:12px; height:12px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; display:inline-block; }
-
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .live-dot { animation: pulse 1.2s ease-in-out infinite; }
-
+    .live-dot { animation:pulse 1.2s ease-in-out infinite; }
     .section-label {
-      font-family:'IBM Plex Mono', monospace;
-      font-size:9px; letter-spacing:2px; font-weight:600;
-      text-transform:uppercase; color:var(--text3);
-      margin-bottom:8px; padding-bottom:6px;
-      border-bottom: 1px solid var(--border);
+      font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px;
+      font-weight:600; text-transform:uppercase; color:var(--text3);
+      margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);
     }
   </style>
 </head>
@@ -117,12 +105,7 @@ function CountDots({ filled, total, color }) {
   return (
     <span style={{display:"inline-flex",gap:"3px",alignItems:"center"}}>
       {Array.from({length:total}).map((_,i)=>(
-        <span key={i} style={{
-          width:"7px",height:"7px",borderRadius:"50%",
-          background:i<filled?color:"rgba(255,255,255,0.12)",
-          display:"inline-block",
-          boxShadow: i<filled ? "0 0 4px "+color+"80" : "none"
-        }}/>
+        <span key={i} style={{width:"7px",height:"7px",borderRadius:"50%",background:i<filled?color:"rgba(255,255,255,0.15)",display:"inline-block"}}/>
       ))}
     </span>
   );
@@ -137,111 +120,72 @@ function GameRow({ game }) {
   const awayWin = isFinal && game.awayScore > game.homeScore;
   const homeWin = isFinal && game.homeScore > game.awayScore;
   const ls = game.linescore;
+  const inningLabel = ls ? (ls.inningHalf==="Top"?"▲":"▼")+" "+ls.inningOrdinal : "LIVE";
 
-  const inningArrow = ls ? (ls.inningHalf==="Top" ? "▲" : "▼") : "";
-  const inningLabel = ls ? inningArrow+" "+ls.inningOrdinal : "LIVE";
-
-  const dateTimeLabel = (() => {
-    if (!game.startTime) return { date:"TBD", time:"" };
+  const dtLabel = (() => {
+    if (!game.startTime) return {date:"TBD",time:""};
     const d = new Date(game.startTime);
-    const month = d.toLocaleDateString([], {month:"short"});
-    const day = d.getDate();
-    const time = d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
-    return { date: month+" "+day, time };
+    return {
+      date: d.toLocaleDateString([],{month:"short"})+" "+d.getDate(),
+      time: d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})
+    };
   })();
+
+  // Colors: loser text is dimmer but still legible
+  const awayColor = awayWin ? "#fff" : isFinal ? "#8fa0bf" : "var(--text2)";
+  const homeColor = homeWin ? "#fff" : isFinal ? "#8fa0bf" : "var(--text2)";
+  const awayScoreColor = awayWin ? "#fff" : "#a0b0cc";
+  const homeScoreColor = homeWin ? "#fff" : "#a0b0cc";
 
   return (
     <div style={{
-      background: isLive ? "var(--live-bg)" : "var(--surface)",
-      border: "1px solid " + (isLive ? "var(--live-border)" : "var(--border)"),
-      borderRadius:"10px", padding:"10px 12px", marginBottom:"5px",
+      background:isLive?"var(--live-bg)":"var(--surface)",
+      border:"1px solid "+(isLive?"var(--live-border)":"var(--border)"),
+      borderRadius:"10px",padding:"10px 12px",marginBottom:"5px"
     }}>
       <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-        {/* Status column */}
-        <div style={{width:"50px",flexShrink:0,textAlign:"center"}}>
-          {isLive && (
-            <span style={{
-              fontFamily:"'IBM Plex Mono',monospace",
-              fontSize:"8px",fontWeight:700,color:"var(--live)",
-              background:"var(--live-bg)",border:"1px solid var(--live-border)",
-              padding:"2px 5px",borderRadius:"4px",letterSpacing:"0.5px"
-            }}>{inningLabel}</span>
-          )}
-          {isFinal && (
-            <span style={{
-              fontFamily:"'IBM Plex Mono',monospace",
-              fontSize:"9px",fontWeight:600,
-              color:"#a0aabf",
-              letterSpacing:"0.5px"
-            }}>FINAL</span>
-          )}
+        {/* Status */}
+        <div style={{width:"52px",flexShrink:0,textAlign:"center"}}>
+          {isLive && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",fontWeight:700,color:"var(--live)",background:"var(--live-bg)",border:"1px solid var(--live-border)",padding:"2px 5px",borderRadius:"4px"}}>{inningLabel}</span>}
+          {isFinal && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",fontWeight:600,color:"#c8d5ea",letterSpacing:"0.5px"}}>FINAL</span>}
           {isUpcoming && (
             <div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",fontWeight:700,color:"var(--gold)",lineHeight:"1.4"}}>{dateTimeLabel.date}</div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"#a0aabf",lineHeight:"1.4"}}>{dateTimeLabel.time}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",fontWeight:700,color:"var(--gold)",lineHeight:"1.4"}}>{dtLabel.date}</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"#c8d5ea",lineHeight:"1.4"}}>{dtLabel.time}</div>
             </div>
           )}
         </div>
 
-        {/* Away team */}
+        {/* Away */}
         <div style={{display:"flex",alignItems:"center",gap:"6px",flex:1,minWidth:0}}>
           <span style={{fontSize:"14px",flexShrink:0}}>{away.flag}</span>
-          <span style={{
-            fontSize:"13px",fontWeight:awayWin?700:500,
-            color:awayWin?"#ffffff":isFinal?"#8892a8":"var(--text2)",
-            flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"
-          }}>{away.name}</span>
-          {game.awayScore!==null && (
-            <span style={{
-              fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",
-              color:awayWin?"#ffffff":"#c8cedd",
-              flexShrink:0,minWidth:"22px",textAlign:"right",lineHeight:1
-            }}>{game.awayScore}</span>
-          )}
+          <span style={{fontSize:"13px",fontWeight:awayWin?700:500,color:awayColor,flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{away.name}</span>
+          {game.awayScore!==null && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",color:awayScoreColor,flexShrink:0,minWidth:"22px",textAlign:"right",lineHeight:1}}>{game.awayScore}</span>}
         </div>
 
-        <span style={{color:"var(--text3)",fontSize:"12px",flexShrink:0,fontFamily:"'IBM Plex Mono',monospace"}}>–</span>
+        <span style={{color:"var(--text3)",fontSize:"12px",flexShrink:0}}>–</span>
 
-        {/* Home team */}
+        {/* Home */}
         <div style={{display:"flex",alignItems:"center",gap:"6px",flex:1,minWidth:0,justifyContent:"flex-end"}}>
-          {game.homeScore!==null && (
-            <span style={{
-              fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",
-              color:homeWin?"#ffffff":"#c8cedd",
-              flexShrink:0,minWidth:"22px",textAlign:"left",lineHeight:1
-            }}>{game.homeScore}</span>
-          )}
-          <span style={{
-            fontSize:"13px",fontWeight:homeWin?700:500,
-            color:homeWin?"#ffffff":isFinal?"#8892a8":"var(--text2)",
-            flex:1,textAlign:"right",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"
-          }}>{home.name}</span>
+          {game.homeScore!==null && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",color:homeScoreColor,flexShrink:0,minWidth:"22px",textAlign:"left",lineHeight:1}}>{game.homeScore}</span>}
+          <span style={{fontSize:"13px",fontWeight:homeWin?700:500,color:homeColor,flex:1,textAlign:"right",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{home.name}</span>
           <span style={{fontSize:"14px",flexShrink:0}}>{home.flag}</span>
         </div>
       </div>
 
-      {/* Live detail row */}
       {isLive && ls && (
-        <div style={{
-          marginTop:"8px",paddingTop:"8px",
-          borderTop:"1px solid var(--live-border)",
-          display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"6px"
-        }}>
+        <div style={{marginTop:"8px",paddingTop:"8px",borderTop:"1px solid var(--live-border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"6px"}}>
           <div style={{display:"flex",gap:"14px",alignItems:"center"}}>
-            {[
-              {label:"OUTS", filled:ls.outs||0, total:3, color:"var(--live)"},
-              {label:"BALLS", filled:ls.balls||0, total:4, color:"var(--green)"},
-              {label:"STRIKES", filled:ls.strikes||0, total:3, color:"var(--gold)"},
-            ].map(({label,filled,total,color})=>(
-              <div key={label} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px"}}>
-                <CountDots filled={filled} total={total} color={color}/>
-                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color:"#8892a8",letterSpacing:"1px"}}>{label}</span>
+            {[{l:"OUTS",f:ls.outs||0,t:3,c:"var(--live)"},{l:"BALLS",f:ls.balls||0,t:4,c:"var(--green)"},{l:"STRIKES",f:ls.strikes||0,t:3,c:"var(--gold)"}].map(({l,f,t,c})=>(
+              <div key={l} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px"}}>
+                <CountDots filled={f} total={t} color={c}/>
+                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color:"var(--text3)",letterSpacing:"1px"}}>{l}</span>
               </div>
             ))}
           </div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"2px"}}>
-            {ls.batter && <span style={{fontSize:"10px",color:"var(--text2)"}}>🏏 <strong style={{color:"var(--text)"}}>{ls.batter.split(" ").pop()}</strong></span>}
-            {ls.pitcher && <span style={{fontSize:"10px",color:"#8892a8"}}>⚾ {ls.pitcher.split(" ").pop()}</span>}
+            {ls.batter && <span style={{fontSize:"10px",color:"var(--text2)"}}>🏏 <strong style={{color:"#fff"}}>{ls.batter.split(" ").pop()}</strong></span>}
+            {ls.pitcher && <span style={{fontSize:"10px",color:"var(--text3)"}}>⚾ {ls.pitcher.split(" ").pop()}</span>}
           </div>
         </div>
       )}
@@ -249,8 +193,8 @@ function GameRow({ game }) {
   );
 }
 
-function PoolCard({ poolKey, pool, records }) {
-  const colorVar = pool.color;
+function PoolCard({ pool, records }) {
+  const color = pool.color;
   const sorted = [...pool.teams].sort((a,b)=>{
     const ra=records[a]||{w:0,l:0}, rb=records[b]||{w:0,l:0};
     return rb.w-ra.w || ra.l-rb.l;
@@ -259,31 +203,24 @@ function PoolCard({ poolKey, pool, records }) {
     <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"12px",overflow:"hidden"}}>
       <div style={{padding:"9px 12px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--surface2)"}}>
         <div>
-          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"11px",color:colorVar,letterSpacing:"1px"}}>{pool.name.toUpperCase()}</div>
-          <div style={{fontSize:"9px",color:"#8892a8",marginTop:"1px"}}>{pool.location}</div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"11px",color,letterSpacing:"1px"}}>{pool.name.toUpperCase()}</div>
+          <div style={{fontSize:"9px",color:"var(--text3)",marginTop:"1px"}}>{pool.location}</div>
         </div>
-        <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8892a8"}}>W–L</span>
+        <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)"}}>W–L</span>
       </div>
       {sorted.map((t,i)=>{
         const r=records[t]||{w:0,l:0};
         const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
         const isAdv=i<2;
         return (
-          <div key={t} style={{
-            display:"flex",alignItems:"center",justifyContent:"space-between",
-            padding:"7px 12px",
-            background: i===0 && r.w>0 ? "rgba(255,255,255,0.03)" : "transparent",
-            borderBottom:i<sorted.length-1?"1px solid var(--border)":"none"
-          }}>
+          <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 12px",borderBottom:i<sorted.length-1?"1px solid var(--border)":"none"}}>
             <div style={{display:"flex",alignItems:"center",gap:"7px",minWidth:0,flex:1}}>
-              <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8892a8",flexShrink:0,width:"10px"}}>{i+1}</span>
+              <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",flexShrink:0,width:"10px"}}>{i+1}</span>
               <span style={{fontSize:"13px",flexShrink:0}}>{info.flag}</span>
-              <span style={{fontSize:"12px",fontWeight:isAdv?600:400,color:isAdv?"#ffffff":"#8892a8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</span>
-              {isAdv && r.w>0 && (
-                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color:colorVar,border:"1px solid "+colorVar,padding:"1px 4px",borderRadius:"3px",flexShrink:0,opacity:0.8}}>ADV</span>
-              )}
+              <span style={{fontSize:"12px",fontWeight:isAdv?600:400,color:isAdv?"#fff":"var(--text3)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</span>
+              {isAdv && r.w>0 && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color,border:"1px solid "+color,padding:"1px 4px",borderRadius:"3px",flexShrink:0,opacity:0.9}}>ADV</span>}
             </div>
-            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"12px",color:r.w>0?colorVar:"#8892a8",flexShrink:0,marginLeft:"8px"}}>{r.w}–{r.l}</span>
+            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"12px",color:r.w>0?color:"var(--text3)",flexShrink:0,marginLeft:"8px"}}>{r.w}–{r.l}</span>
           </div>
         );
       })}
@@ -322,26 +259,25 @@ function App() {
 
   return (
     <div style={{background:"var(--bg)",height:"100%",display:"flex",flexDirection:"column",color:"var(--text)"}}>
-      {/* Header */}
       <div style={{background:"var(--surface2)",borderBottom:"1px solid var(--border2)",padding:"12px 16px 0",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
           <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
             <span style={{fontSize:"20px"}}>⚾</span>
             <div>
-              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"15px",fontWeight:700,letterSpacing:"2px",color:"#ffffff"}}>2026 WBC</div>
-              <div style={{fontSize:"9px",color:"#8892a8",letterSpacing:"1px",marginTop:"1px",fontFamily:"'IBM Plex Mono',monospace"}}>WORLD BASEBALL CLASSIC</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"15px",fontWeight:700,letterSpacing:"2px",color:"#fff"}}>2026 WBC</div>
+              <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginTop:"1px"}}>WORLD BASEBALL CLASSIC</div>
             </div>
           </div>
           <div style={{textAlign:"right"}}>
             {loading ? (
-              <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}><div className="spinner"/><span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8892a8"}}>Loading…</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}><div className="spinner"/><span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)"}}>Loading…</span></div>
             ) : (
               <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}>
-                <span className={hasLive?"live-dot":""} style={{width:"7px",height:"7px",borderRadius:"50%",background:hasLive?"var(--live)":"#8892a8",display:"inline-block",flexShrink:0,boxShadow:hasLive?"0 0 6px var(--live)":"none"}}/>
-                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",fontWeight:700,letterSpacing:"1px",color:hasLive?"var(--live)":"#8892a8"}}>{hasLive?liveGames.length+" LIVE":"NO LIVE GAMES"}</span>
+                <span className={hasLive?"live-dot":""} style={{width:"7px",height:"7px",borderRadius:"50%",background:hasLive?"var(--live)":"var(--text3)",display:"inline-block",flexShrink:0,boxShadow:hasLive?"0 0 6px var(--live)":"none"}}/>
+                <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",fontWeight:700,letterSpacing:"1px",color:hasLive?"var(--live)":"var(--text3)"}}>{hasLive?liveGames.length+" LIVE":"NO LIVE GAMES"}</span>
               </div>
             )}
-            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"#8892a8",marginTop:"3px"}}>Updated {timeAgo} ago</div>
+            <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",marginTop:"3px"}}>Updated {timeAgo} ago</div>
           </div>
         </div>
         <div className="tabs">
@@ -354,44 +290,18 @@ function App() {
       <div className="scroll-area">
         {activeTab==="standings" && (
           <div>
-            {liveGames.length>0 && (
-              <div style={{marginBottom:"16px"}}>
-                <div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>
-                {liveGames.map((g,i)=><GameRow key={i} game={g}/>)}
-              </div>
-            )}
+            {liveGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>{liveGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>}
             <div className="section-label">Pool Standings — Top 2 Advance</div>
-            <div className="pool-grid">
-              {Object.entries(WBC_TEAMS).map(([key,pool])=>(
-                <PoolCard key={key} poolKey={key.replace("pool","").toUpperCase()} pool={pool} records={records}/>
-              ))}
-            </div>
+            <div className="pool-grid">{Object.entries(WBC_TEAMS).map(([key,pool])=><PoolCard key={key} pool={pool} records={records}/>)}</div>
           </div>
         )}
 
         {activeTab==="scores" && (
           <div>
-            {liveGames.length>0 && (
-              <div style={{marginBottom:"16px"}}>
-                <div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>
-                {liveGames.map((g,i)=><GameRow key={i} game={g}/>)}
-              </div>
-            )}
-            {finalGames.length>0 && (
-              <div style={{marginBottom:"16px"}}>
-                <div className="section-label">Completed</div>
-                {[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g}/>)}
-              </div>
-            )}
-            {upcomingGames.length>0 && (
-              <div>
-                <div className="section-label">Upcoming</div>
-                {upcomingGames.map((g,i)=><GameRow key={i} game={g}/>)}
-              </div>
-            )}
-            {games.length===0 && !loading && (
-              <div style={{textAlign:"center",marginTop:"60px",color:"#8892a8",fontSize:"13px"}}>No games found.</div>
-            )}
+            {liveGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>{liveGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>}
+            {finalGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label">Completed</div>{[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g}/>)}</div>}
+            {upcomingGames.length>0 && <div><div className="section-label">Upcoming</div>{upcomingGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>}
+            {games.length===0 && !loading && <div style={{textAlign:"center",marginTop:"60px",color:"var(--text3)",fontSize:"13px"}}>No games found.</div>}
           </div>
         )}
 
@@ -400,7 +310,7 @@ function App() {
             <div className="section-label">← Swipe for full bracket →</div>
             <div className="bracket-scroll">
               <div style={{minWidth:"160px",flexShrink:0}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8892a8",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>POOL PLAY</div>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>POOL PLAY</div>
                 {Object.entries(WBC_TEAMS).map(([key,pool])=>{
                   const sorted=[...pool.teams].sort((a,b)=>((records[b]||{w:0}).w-(records[a]||{w:0}).w));
                   return (
@@ -408,40 +318,36 @@ function App() {
                       <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:pool.color,fontWeight:700,letterSpacing:"1px",marginBottom:"4px"}}>{pool.name.toUpperCase()}</div>
                       {sorted.slice(0,2).map(t=>{ const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; const r=records[t]||{w:0,l:0}; return (
                         <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 8px",marginBottom:"3px",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"6px"}}>
-                          <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
-                            <span style={{fontSize:"11px"}}>{info.flag}</span>
-                            <span style={{fontSize:"10px",color:"#c8cedd",fontWeight:500}}>{info.name}</span>
-                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:"5px"}}><span style={{fontSize:"11px"}}>{info.flag}</span><span style={{fontSize:"10px",color:"var(--text2)",fontWeight:500}}>{info.name}</span></div>
                           <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:pool.color,fontWeight:700}}>{r.w}–{r.l}</span>
                         </div>
                       );})}
                       {sorted.slice(2).map(t=>{ const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; return (
-                        <div key={t} style={{display:"flex",alignItems:"center",gap:"5px",padding:"3px 8px",opacity:0.3}}>
-                          <span style={{fontSize:"10px"}}>{info.flag}</span>
-                          <span style={{fontSize:"10px",color:"#8892a8"}}>{info.name}</span>
+                        <div key={t} style={{display:"flex",alignItems:"center",gap:"5px",padding:"3px 8px",opacity:0.35}}>
+                          <span style={{fontSize:"10px"}}>{info.flag}</span><span style={{fontSize:"10px",color:"var(--text3)"}}>{info.name}</span>
                         </div>
                       );})}
                     </div>
                   );
                 })}
               </div>
-              <div style={{display:"flex",alignItems:"center",color:"#8892a8",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
+              <div style={{display:"flex",alignItems:"center",color:"var(--text3)",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
               <div style={{minWidth:"150px",flexShrink:0}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8892a8",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>QUARTERFINALS<br/><span style={{fontWeight:400,fontSize:"8px"}}>MAR 13–14</span></div>
-                {["Houston, TX","Miami, FL"].map((city,ci)=>(<div key={ci} style={{marginBottom:"12px"}}><div style={{fontSize:"8px",color:"#8892a8",marginBottom:"4px",paddingLeft:"2px"}}>📍 {city}</div>{[1,2].map(n=>(<div key={n} style={{padding:"7px 10px",marginBottom:"3px",background:"var(--surface)",border:"1px dashed var(--border2)",borderRadius:"6px",fontSize:"10px",color:"#8892a8"}}>TBD vs TBD</div>))}</div>))}
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>QUARTERFINALS<br/><span style={{fontWeight:400,fontSize:"8px"}}>MAR 13–14</span></div>
+                {["Houston, TX","Miami, FL"].map((city,ci)=>(<div key={ci} style={{marginBottom:"12px"}}><div style={{fontSize:"8px",color:"var(--text3)",marginBottom:"4px"}}>📍 {city}</div>{[1,2].map(n=>(<div key={n} style={{padding:"7px 10px",marginBottom:"3px",background:"var(--surface)",border:"1px dashed var(--border2)",borderRadius:"6px",fontSize:"10px",color:"var(--text3)"}}>TBD vs TBD</div>))}</div>))}
               </div>
-              <div style={{display:"flex",alignItems:"center",color:"#8892a8",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
+              <div style={{display:"flex",alignItems:"center",color:"var(--text3)",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
               <div style={{minWidth:"140px",flexShrink:0}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"#8892a8",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>SEMIFINALS<br/><span style={{fontWeight:400,fontSize:"8px"}}>MAR 15–16 · MIAMI</span></div>
-                {[1,2].map(n=>(<div key={n} style={{padding:"9px 10px",marginBottom:"5px",background:"var(--surface)",border:"1px dashed var(--border2)",borderRadius:"6px",fontSize:"10px",color:"#8892a8"}}>TBD vs TBD</div>))}
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:600}}>SEMIFINALS<br/><span style={{fontWeight:400,fontSize:"8px"}}>MAR 15–16 · MIAMI</span></div>
+                {[1,2].map(n=>(<div key={n} style={{padding:"9px 10px",marginBottom:"5px",background:"var(--surface)",border:"1px dashed var(--border2)",borderRadius:"6px",fontSize:"10px",color:"var(--text3)"}}>TBD vs TBD</div>))}
               </div>
-              <div style={{display:"flex",alignItems:"center",color:"#8892a8",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
+              <div style={{display:"flex",alignItems:"center",color:"var(--text3)",fontSize:"14px",flexShrink:0,padding:"0 4px"}}>→</div>
               <div style={{minWidth:"130px",flexShrink:0}}>
-                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--gold)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:700}}>CHAMPIONSHIP<br/><span style={{color:"#8892a8",fontWeight:400,fontSize:"8px"}}>MAR 17 · MIAMI</span></div>
-                <div style={{padding:"20px 12px",textAlign:"center",background:"linear-gradient(135deg,rgba(245,200,66,0.08),rgba(245,200,66,0.03))",border:"1px solid rgba(245,200,66,0.2)",borderRadius:"10px"}}>
+                <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--gold)",letterSpacing:"1px",marginBottom:"10px",textAlign:"center",fontWeight:700}}>CHAMPIONSHIP<br/><span style={{color:"var(--text3)",fontWeight:400,fontSize:"8px"}}>MAR 17 · MIAMI</span></div>
+                <div style={{padding:"20px 12px",textAlign:"center",background:"linear-gradient(135deg,rgba(245,200,66,0.08),rgba(245,200,66,0.03))",border:"1px solid rgba(245,200,66,0.25)",borderRadius:"10px"}}>
                   <div style={{fontSize:"28px",marginBottom:"8px"}}>🏆</div>
                   <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--gold)",letterSpacing:"2px",fontWeight:700}}>CHAMPION</div>
-                  <div style={{fontSize:"10px",color:"#8892a8",marginTop:"4px"}}>TBD</div>
+                  <div style={{fontSize:"10px",color:"var(--text3)",marginTop:"4px"}}>TBD</div>
                 </div>
               </div>
             </div>
@@ -449,7 +355,7 @@ function App() {
         )}
 
         <div style={{marginTop:"20px",textAlign:"center"}} onClick={fetchScores}>
-          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"#8892a8",letterSpacing:"1px",cursor:"pointer",opacity:0.5}}>AUTO-REFRESHES EVERY 10s · TAP TO REFRESH</span>
+          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",letterSpacing:"1px",cursor:"pointer",opacity:0.6}}>AUTO-REFRESHES EVERY 10s · TAP TO REFRESH</span>
         </div>
       </div>
     </div>
