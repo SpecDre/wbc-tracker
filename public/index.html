@@ -180,7 +180,11 @@ function App() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { fetchScores(); intervalRef.current = setInterval(fetchScores, 30000); return () => clearInterval(intervalRef.current); }, []);
+  useEffect(() => {
+    fetchScores();
+    intervalRef.current = setInterval(fetchScores, 10000);
+    return () => clearInterval(intervalRef.current);
+  }, []);
   useEffect(() => { const iv = setInterval(() => setPulse(p=>!p), 800); return () => clearInterval(iv); }, []);
 
   const records = computeStandings(games);
@@ -268,7 +272,7 @@ function App() {
           </div>
         )}
         <div style={{marginTop:"18px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)",textAlign:"center"}}>
-          <span onClick={fetchScores} style={{fontSize:"8px",color:"#2a2a2a",letterSpacing:"1px",cursor:"pointer"}}>AUTO-REFRESHES EVERY 30s · TAP TO FORCE REFRESH</span>
+          <span onClick={fetchScores} style={{fontSize:"8px",color:"#2a2a2a",letterSpacing:"1px",cursor:"pointer"}}>AUTO-REFRESHES EVERY 10s · TAP TO FORCE REFRESH</span>
         </div>
       </div>
     </div>
