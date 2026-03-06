@@ -83,20 +83,36 @@ function GameRow({ game }) {
   const home = TEAM_INFO[game.home]||{name:game.home,flag:"🏳️"};
   const isLive = game.status==="live";
   const isFinal = game.status==="final";
+  const isUpcoming = game.status==="upcoming";
   const awayWin = isFinal && game.awayScore > game.homeScore;
   const homeWin = isFinal && game.homeScore > game.awayScore;
   const ls = game.linescore;
-  const timeLabel = game.startTime ? new Date(game.startTime).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "TBD";
+
   const inningArrow = ls ? (ls.inningHalf==="Top" ? "▲" : "▼") : "";
   const inningLabel = ls ? inningArrow+" "+ls.inningOrdinal : "LIVE";
+
+  // Date + time label for upcoming games
+  const dateTimeLabel = (() => {
+    if (!game.startTime) return "TBD";
+    const d = new Date(game.startTime);
+    const month = d.toLocaleDateString([], {month:"short"});
+    const day = d.getDate();
+    const time = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    return { date: month+" "+day, time };
+  })();
 
   return (
     <div style={{background:isLive?"rgba(255,80,80,0.06)":"rgba(255,255,255,0.02)",border:isLive?"1px solid rgba(255,80,80,0.3)":"1px solid rgba(255,255,255,0.06)",borderRadius:"6px",padding:"7px 8px",marginBottom:"5px"}}>
       <div style={{display:"flex",alignItems:"center",gap:"4px"}}>
-        <div style={{minWidth:"38px",textAlign:"center",flexShrink:0}}>
+        <div style={{minWidth:"42px",textAlign:"center",flexShrink:0}}>
           {isLive && <span style={{fontSize:"8px",fontWeight:700,color:"#ff5050",background:"rgba(255,80,80,0.15)",padding:"2px 4px",borderRadius:"3px"}}>{inningLabel}</span>}
           {isFinal && <span style={{fontSize:"8px",color:"#555"}}>FINAL</span>}
-          {game.status==="upcoming" && <span style={{fontSize:"8px",color:"#444"}}>{timeLabel}</span>}
+          {isUpcoming && (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"0px"}}>
+              <span style={{fontSize:"8px",color:"#e8b84b",fontWeight:700,lineHeight:"1.2"}}>{dateTimeLabel.date}</span>
+              <span style={{fontSize:"7px",color:"#555",lineHeight:"1.2"}}>{dateTimeLabel.time}</span>
+            </div>
+          )}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:"4px",flex:1,minWidth:0}}>
           <span style={{fontSize:"12px",flexShrink:0}}>{away.flag}</span>
