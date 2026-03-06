@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>2026 WBC Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width:100%; height:100%; background:#0a0a0f; overflow:hidden; }
+    #root { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
+
+    .scroll-area {
+      flex:1; overflow-y:scroll;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
+      padding:14px 14px 40px;
+    }
+    .bracket-scroll {
+      display:flex; gap:12px;
+      overflow-x:scroll;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior-x:contain;
+      padding-bottom:16px;
+    }
+    .pool-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media(max-width:380px){ .pool-grid{ grid-template-columns:1fr; } }
+
+    .game-row {
+      display:flex; align-items:center; gap:6px;
+      padding:7px 10px; border-radius:8px;
+      margin-bottom:5px; font-size:12px;
+    }
+    .team-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab-btn {
+      background:none; border:none; cursor:pointer;
+      padding:8px 16px; font-family:'Courier New',monospace;
+      font-size:11px; letter-spacing:2px; font-weight:700;
+      text-transform:uppercase; white-space:nowrap;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+    }
+
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spinner {
+      width:14px; height:14px; border:2px solid #333;
+      border-top-color:#e8b84b; border-radius:50%;
+      animation:spin 0.8s linear infinite; display:inline-block;
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const WBC_TEAMS = {
+  poolA:{ name:"POOL A", location:"San Juan, PR",  teams:["PUR","CAN","COL","CUB","PAN"] },
+  poolB:{ name:"POOL B", location:"Houston, TX",   teams:["USA","MEX","ITA","GBR","BRA"] },
+  poolC:{ name:"POOL C", location:"Tokyo, Japan",  teams:["JPN","KOR","AUS","TPE","CZE"] },
+  poolD:{ name:"POOL D", location:"Miami, FL",     teams:["DOM","VEN","NED","NCA","ISR"] },
+};
+
+const TEAM_INFO = {
+  PUR:{name:"Puerto Rico",flag:"🇵🇷"}, CAN:{name:"Canada",flag:"🇨🇦"},
+  COL:{name:"Colombia",flag:"🇨🇴"},   CUB:{name:"Cuba",flag:"🇨🇺"},
+  PAN:{name:"Panama",flag:"🇵🇦"},     USA:{name:"USA",flag:"🇺🇸"},
+  MEX:{name:"Mexico",flag:"🇲🇽"},     ITA:{name:"Italy",flag:"🇮🇹"},
+  GBR:{name:"Gt. Britain",flag:"🇬🇧"}, BRA:{name:"Brazil",flag:"🇧🇷"},
+  JPN:{name:"Japan",flag:"🇯🇵"},      KOR:{name:"Korea",flag:"🇰🇷"},
+  AUS:{name:"Australia",flag:"🇦🇺"},  TPE:{name:"Ch. Taipei",flag:"🇹🇼"},
+  CZE:{name:"Czechia",flag:"🇨🇿"},    DOM:{name:"Dom. Rep.",flag:"🇩🇴"},
+  VEN:{name:"Venezuela",flag:"🇻🇪"},  NED:{name:"Netherlands",flag:"🇳🇱"},
+  NCA:{name:"Nicaragua",flag:"🇳🇮"},  ISR:{name:"Israel",flag:"🇮🇱"},
+};
+
+const POOL_COLORS = {
+  A:{ accent:"#e8b84b", bg:"rgba(232,184,75,0.08)",  border:"rgba(232,184,75,0.3)"  },
+  B:{ accent:"#4b9fe8", bg:"rgba(75,159,232,0.08)",  border:"rgba(75,159,232,0.3)"  },
+  C:{ accent:"#e84b6a", bg:"rgba(232,75,106,0.08)",  border:"rgba(232,75,106,0.3)"  },
+  D:{ accent:"#4be8a0", bg:"rgba(75,232,160,0.08)",  border:"rgba(75,232,160,0.3)"  },
+};
+
+function computeStandings(games) {
+  const r = {};
+  Object.values(WBC_TEAMS).forEach(p => p.teams.forEach(t => { r[t]={w:0,l:0}; }));
+  games.forEach(g => {
+    if (g.status==="final" && g.awayScore!==null && g.homeScore!==null) {
+      if(!r[g.away]) r[g.away]={w:0,l:0};
+      if(!r[g.home]) r[g.home]={w:0,l:0};
+      if(g.awayScore>g.homeScore){ r[g.away].w++; r[g.home].l++; }
+      else { r[g.home].w++; r[g.away].l++; }
+    }
+  });
+  return r;
+}
+
+function GameRow({ game }) {
+  const away = TEAM_INFO[game.away]||{name:game.away,flag:"🏳️"};
+  const home = TEAM_INFO[game.home]||{name:game.home,flag:"🏳️"};
+  const isLive = game.status==="live";
+  const isFinal = game.status==="final";
+  const awayWin = isFinal && game.awayScore > game.homeScore;
+  const homeWin = isFinal && game.homeScore > game.awayScore;
+
+  const timeLabel = game.startTime
+    ? new Date(game.startTime).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})
+    : "TBD";
+
+  return (
+    <div className="game-row" style={{
+      background:isLive?"rgba(255,80,80,0.06)":"rgba(255,255,255,0.02)",
+      border:isLive?"1px solid rgba(255,80,80,0.25)":"1px solid rgba(255,255,255,0.06)",
+    }}>
+      <div style={{minWidth:"34px",textAlign:"center",flexShrink:0}}>
+        {isLive && <span style={{fontSize:"8px",fontWeight:700,color:"#ff5050",background:"rgba(255,80,80,0.15)",padding:"2px 4px",borderRadius:"3px"}}>LIVE</span>}
+        {isFinal && <span style={{fontSize:"8px",color:"#555"}}>FINAL</span>}
+        {game.status==="upcoming" && <span style={{fontSize:"8px",color:"#444"}}>{timeLabel}</span>}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:"4px",flex:1,minWidth:0}}>
+        <span style={{fontSize:"12px",flexShrink:0}}>{away.flag}</span>
+        <span className="team-name" style={{color:awayWin?"#fff":isFinal?"#666":"#bbb",fontWeight:awayWin?700:400,flex:1}}>{away.name}</span>
+        {game.awayScore!==null && <span style={{fontWeight:700,fontSize:"14px",color:awayWin?"#fff":"#555",flexShrink:0}}>{game.awayScore}</span>}
+      </div>
+      <span style={{color:"#333",fontSize:"10px",flexShrink:0,padding:"0 2px"}}>@</span>
+      <div style={{display:"flex",alignItems:"center",gap:"4px",flex:1,minWidth:0,justifyContent:"flex-end"}}>
+        {game.homeScore!==null && <span style={{fontWeight:700,fontSize:"14px",color:homeWin?"#fff":"#555",flexShrink:0}}>{game.homeScore}</span>}
+        <span className="team-name" style={{color:homeWin?"#fff":isFinal?"#666":"#bbb",fontWeight:homeWin?700:400,flex:1,textAlign:"right"}}>{home.name}</span>
+        <span style={{fontSize:"12px",flexShrink:0}}>{home.flag}</span>
+      </div>
+    </div>
+  );
+}
+
+function PoolCard({ poolKey, pool, records }) {
+  const colors = POOL_COLORS[poolKey];
+  const sorted = [...pool.teams].sort((a,b)=>{
+    const ra=records[a]||{w:0,l:0}, rb=records[b]||{w:0,l:0};
+    return rb.w-ra.w || ra.l-rb.l;
+  });
+  return (
+    <div style={{background:colors.bg,border:`1px solid ${colors.border}`,borderRadius:"10px",overflow:"hidden"}}>
+      <div style={{padding:"8px 10px",borderBottom:`1px solid ${colors.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontWeight:800,fontSize:"11px",color:colors.accent,letterSpacing:"1px"}}>{pool.name}</div>
+          <div style={{fontSize:"8px",color:"#444",marginTop:"1px"}}>{pool.location}</div>
+        </div>
+        <span style={{fontSize:"8px",color:"#444"}}>W–L</span>
+      </div>
+      {sorted.map((t,i)=>{
+        const r=records[t]||{w:0,l:0};
+        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
+        const isAdv=i<2;
+        return (
+          <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 10px",background:isAdv?"rgba(255,255,255,0.025)":"transparent",borderBottom:i<sorted.length-1?"1px solid rgba(255,255,255,0.04)":"none"}}>
+            <div style={{display:"flex",alignItems:"center",gap:"5px",minWidth:0,flex:1}}>
+              <span style={{fontSize:"9px",color:"#333",flexShrink:0}}>{i+1}</span>
+              <span style={{fontSize:"12px",flexShrink:0}}>{info.flag}</span>
+              <span style={{fontSize:"11px",color:isAdv?"#ddd":"#666",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</span>
+              {isAdv && r.w>0 && <span style={{fontSize:"6px",color:colors.accent,border:`1px solid ${colors.border}`,padding:"1px 3px",borderRadius:"3px",flexShrink:0,marginLeft:"2px"}}>ADV</span>}
+            </div>
+            <span style={{fontWeight:700,fontSize:"11px",color:r.w>0?colors.accent:"#333",flexShrink:0,marginLeft:"6px"}}>{r.w}–{r.l}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function App() {
+  const [activeTab, setActiveTab] = useState("standings");
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [pulse, setPulse] = useState(true);
+  const intervalRef = useRef(null);
+
+  async function fetchScores() {
+    try {
+      const res = await fetch("/api/scores");
+      const data = await res.json();
+      if (data.games) {
+        setGames(data.games);
+        setLastUpdate(new Date());
+      }
+    } catch(e) {
+      console.error("Failed to fetch scores", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchScores();
+    intervalRef.current = setInterval(fetchScores, 30000); // every 30s
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  useEffect(() => {
+    const iv = setInterval(() => setPulse(p=>!p), 800);
+    return () => clearInterval(iv);
+  }, []);
+
+  const records = computeStandings(games);
+  const liveGames = games.filter(g=>g.status==="live");
+  const finalGames = games.filter(g=>g.status==="final");
+  const upcomingGames = games.filter(g=>g.status==="upcoming");
+
+  const timeAgo = lastUpdate
+    ? `${Math.floor((Date.now()-lastUpdate)/1000)}s ago`
+    : "loading...";
+
+  return (
+    <div style={{fontFamily:"'Courier New',Courier,monospace",background:"#0a0a0f",height:"100%",display:"flex",flexDirection:"column",color:"#ddd"}}>
+
+      {/* Sticky header */}
+      <div style={{background:"linear-gradient(135deg,#0d1117,#0a0f1e)",borderBottom:"1px solid rgba(255,255,255,0.08)",padding:"12px 14px 0",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
+              <span style={{fontSize:"16px"}}>⚾</span>
+              <span style={{fontSize:"16px",fontWeight:900,letterSpacing:"2px",background:"linear-gradient(90deg,#e8b84b,#fff,#4b9fe8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+                2026 WBC
+              </span>
+            </div>
+            <div style={{fontSize:"8px",color:"#444",letterSpacing:"2px",marginTop:"1px"}}>WORLD BASEBALL CLASSIC</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            {loading ? (
+              <div style={{display:"flex",alignItems:"center",gap:"6px",justifyContent:"flex-end"}}>
+                <div className="spinner"/>
+                <span style={{fontSize:"9px",color:"#555"}}>Loading...</span>
+              </div>
+            ) : (
+              <div style={{display:"flex",alignItems:"center",gap:"5px",justifyContent:"flex-end"}}>
+                <span style={{width:"6px",height:"6px",borderRadius:"50%",background:liveGames.length>0?(pulse?"#ff5050":"#330000"):"#333",display:"inline-block",transition:"background 0.3s",flexShrink:0}}/>
+                <span style={{fontSize:"10px",color:liveGames.length>0?"#ff5050":"#555",fontWeight:700,letterSpacing:"1px"}}>
+                  {liveGames.length>0 ? `${liveGames.length} LIVE` : "NO LIVE GAMES"}
+                </span>
+              </div>
+            )}
+            <div style={{fontSize:"8px",color:"#333",marginTop:"2px"}}>Updated {timeAgo}</div>
+          </div>
+        </div>
+        <div className="tabs">
+          {["standings","scores","bracket"].map(tab=>(
+            <button key={tab} className="tab-btn" onClick={()=>setActiveTab(tab)} style={{
+              color:activeTab===tab?"#fff":"#555",
+              borderBottom:activeTab===tab?"2px solid #e8b84b":"2px solid transparent",
+            }}>{tab}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="scroll-area">
+
+        {/* STANDINGS */}
+        {activeTab==="standings" && (
+          <div>
+            {liveGames.length>0 && (
+              <div style={{marginBottom:"18px"}}>
+                <div style={{fontSize:"8px",color:"#ff5050",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>● LIVE NOW</div>
+                {liveGames.map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            <div style={{fontSize:"8px",color:"#444",fontWeight:700,letterSpacing:"2px",marginBottom:"10px"}}>POOL STANDINGS — TOP 2 ADVANCE</div>
+            <div className="pool-grid">
+              {Object.entries(WBC_TEAMS).map(([key,pool])=>(
+                <PoolCard key={key} poolKey={key.replace("pool","").toUpperCase()} pool={pool} records={records}/>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SCORES */}
+        {activeTab==="scores" && (
+          <div>
+            {liveGames.length>0 && (
+              <div style={{marginBottom:"18px"}}>
+                <div style={{fontSize:"8px",color:"#ff5050",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>● LIVE NOW</div>
+                {liveGames.map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            {finalGames.length>0 && (
+              <div style={{marginBottom:"18px"}}>
+                <div style={{fontSize:"8px",color:"#555",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>COMPLETED</div>
+                {[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            {upcomingGames.length>0 && (
+              <div>
+                <div style={{fontSize:"8px",color:"#444",fontWeight:700,letterSpacing:"2px",marginBottom:"8px"}}>UPCOMING</div>
+                {upcomingGames.map((g,i)=><GameRow key={i} game={g}/>)}
+              </div>
+            )}
+            {games.length===0 && !loading && (
+              <div style={{textAlign:"center",color:"#444",fontSize:"12px",marginTop:"40px"}}>No WBC games found for today.</div>
+            )}
+          </div>
+        )}
+
+        {/* BRACKET */}
+        {activeTab==="bracket" && (
+          <div>
+            <div style={{fontSize:"8px",color:"#555",fontWeight:700,letterSpacing:"2px",marginBottom:"10px"}}>← SWIPE TO SEE FULL BRACKET →</div>
+            <div className="bracket-scroll">
+
+              <div style={{minWidth:"155px",flexShrink:0}}>
+                <div style={{fontSize:"8px",color:"#666",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>POOL PLAY</div>
+                {Object.entries(WBC_TEAMS).map(([key,pool])=>{
+                  const pl=key.replace("pool","").toUpperCase();
+                  const colors=POOL_COLORS[pl];
+                  const sorted=[...pool.teams].sort((a,b)=>((records[b]||{w:0}).w-(records[a]||{w:0}).w));
+                  return (
+                    <div key={key} style={{marginBottom:"10px"}}>
+                      <div style={{fontSize:"7px",color:colors.accent,fontWeight:700,letterSpacing:"1px",marginBottom:"3px"}}>{pool.name}</div>
+                      {sorted.slice(0,2).map(t=>{
+                        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
+                        const r=records[t]||{w:0,l:0};
+                        return (
+                          <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 7px",marginBottom:"2px",background:colors.bg,border:`1px solid ${colors.border}`,borderRadius:"5px"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:"3px"}}>
+                              <span style={{fontSize:"10px"}}>{info.flag}</span>
+                              <span style={{fontSize:"9px",color:"#bbb"}}>{info.name}</span>
+                            </div>
+                            <span style={{fontSize:"9px",color:colors.accent,fontWeight:700}}>{r.w}–{r.l}</span>
+                          </div>
+                        );
+                      })}
+                      {sorted.slice(2).map(t=>{
+                        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
+                        return (
+                          <div key={t} style={{display:"flex",alignItems:"center",gap:"3px",padding:"3px 7px",opacity:0.3}}>
+                            <span style={{fontSize:"9px"}}>{info.flag}</span>
+                            <span style={{fontSize:"9px",color:"#555"}}>{info.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{display:"flex",alignItems:"center",color:"#333",fontSize:"16px",flexShrink:0}}>→</div>
+
+              <div style={{minWidth:"150px",flexShrink:0}}>
+                <div style={{fontSize:"8px",color:"#777",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>QUARTERFINALS<br/><span style={{color:"#444",fontWeight:400}}>MAR 13–14</span></div>
+                {["📍 HOUSTON","📍 MIAMI"].map((city,ci)=>(
+                  <div key={ci} style={{marginBottom:"12px"}}>
+                    <div style={{fontSize:"7px",color:"#444",letterSpacing:"1px",marginBottom:"4px"}}>{city}</div>
+                    {[1,2].map(n=>(
+                      <div key={n} style={{padding:"6px 8px",marginBottom:"3px",background:"rgba(255,255,255,0.03)",border:"1px dashed rgba(255,255,255,0.1)",borderRadius:"5px",fontSize:"9px",color:"#444"}}>
+                        🏟️ TBD vs TBD
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{display:"flex",alignItems:"center",color:"#333",fontSize:"16px",flexShrink:0}}>→</div>
+
+              <div style={{minWidth:"140px",flexShrink:0}}>
+                <div style={{fontSize:"8px",color:"#777",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>SEMIFINALS<br/><span style={{color:"#444",fontWeight:400}}>MAR 15–16 · MIAMI</span></div>
+                {[1,2].map(n=>(
+                  <div key={n} style={{padding:"8px",marginBottom:"5px",background:"rgba(255,255,255,0.03)",border:"1px dashed rgba(255,255,255,0.1)",borderRadius:"5px",fontSize:"9px",color:"#444"}}>
+                    ⚾ TBD vs TBD
+                  </div>
+                ))}
+              </div>
+
+              <div style={{display:"flex",alignItems:"center",color:"#333",fontSize:"16px",flexShrink:0}}>→</div>
+
+              <div style={{minWidth:"130px",flexShrink:0}}>
+                <div style={{fontSize:"8px",color:"#e8b84b",letterSpacing:"1px",marginBottom:"8px",textAlign:"center",fontWeight:700}}>CHAMPIONSHIP<br/><span style={{color:"#553d00",fontWeight:400}}>MAR 17 · MIAMI</span></div>
+                <div style={{padding:"16px 12px",textAlign:"center",background:"rgba(232,184,75,0.06)",border:"1px solid rgba(232,184,75,0.2)",borderRadius:"8px"}}>
+                  <div style={{fontSize:"24px",marginBottom:"6px"}}>🏆</div>
+                  <div style={{fontSize:"9px",color:"#554400",letterSpacing:"1px"}}>CHAMPION</div>
+                  <div style={{fontSize:"9px",color:"#333",marginTop:"4px"}}>TBD</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        <div style={{marginTop:"18px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.05)",textAlign:"center"}}>
+          <span style={{fontSize:"8px",color:"#2a2a2a",letterSpacing:"1px"}}>AUTO-REFRESHES EVERY 30 SECONDS · MAR 5–17 2026</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
