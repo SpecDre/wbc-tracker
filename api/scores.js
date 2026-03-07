@@ -71,17 +71,20 @@ export default async function handler(req, res) {
             let status = "upcoming";
             if (abs === "Final") status = "final";
             else if (abs === "Live" || det.includes("Progress")) status = "live";
-            allGames.push({ id: game.gamePk, away, home,
+            allGames.push({
+              gameId: game.gamePk,
+              away, home,
               awayScore: status !== "upcoming" ? (game.teams?.away?.score ?? null) : null,
               homeScore: status !== "upcoming" ? (game.teams?.home?.score ?? null) : null,
-              status, startTime: game.gameDate, pool: POOL_MAP[away] });
+              status, startTime: game.gameDate, pool: POOL_MAP[away]
+            });
           }
         }
       } catch(e) {}
     }
     const liveGames = allGames.filter(g => g.status === "live");
     if (liveGames.length > 0) {
-      const linescores = await Promise.all(liveGames.map(g => getLinescore(g.id)));
+      const linescores = await Promise.all(liveGames.map(g => getLinescore(g.gameId)));
       liveGames.forEach((game, i) => { if (linescores[i]) game.linescore = linescores[i]; });
     }
     allGames.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
