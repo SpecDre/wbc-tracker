@@ -382,7 +382,7 @@ function LiveGameCard({ game }) {
       {/* Current Pitcher Stats */}
       {ps && (
         <div className="pitcher-stats-bar">
-          <div className="pitcher-stats-label">NOW<br/>PITCHING</div>
+          <div className="pitcher-stats-label">NOW PITCHING<br/><span style={{color:"#fff",fontSize:"10px",fontWeight:700,letterSpacing:"0"}}>{ls?.pitcher?.split(" ").pop() || "\u2014"}</span></div>
           <div className="pitcher-stats-divider"/>
           <div className="pitcher-stat-cell"><div className="pitcher-stat-val">{ps.ip}</div><div className="pitcher-stat-lbl">IP</div></div>
           <div className="pitcher-stat-cell"><div className="pitcher-stat-val">{ps.k}</div><div className="pitcher-stat-lbl">K</div></div>
