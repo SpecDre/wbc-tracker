@@ -10,27 +10,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     :root {
-      --bg: #252d42;
-      --surface: #2e3750;
-      --surface2: #38425e;
-      --border: rgba(255,255,255,0.12);
-      --border2: rgba(255,255,255,0.22);
-      --text: #ffffff;
-      --text2: #e2e8f5;
-      --text3: #b8c2d8;
-      --live: #ff6060;
-      --live-bg: rgba(255,96,96,0.12);
-      --live-border: rgba(255,96,96,0.35);
-      --gold: #f5c842;
-      --green: #3ecf8e;
-      --pool-a: #f5c842;
-      --pool-b: #6ab4ff;
-      --pool-c: #ff6b92;
-      --pool-d: #3ecf8e;
+      --bg: #252d42; --surface: #2e3750; --surface2: #38425e;
+      --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.22);
+      --text: #ffffff; --text2: #e2e8f5; --text3: #b8c2d8;
+      --live: #ff6060; --live-bg: rgba(255,96,96,0.12); --live-border: rgba(255,96,96,0.35);
+      --gold: #f5c842; --green: #3ecf8e;
+      --pool-a: #f5c842; --pool-b: #6ab4ff; --pool-c: #ff6b92; --pool-d: #3ecf8e;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing:border-box; margin:0; padding:0; }
     html, body { width:100%; height:100%; background:var(--bg); overflow:hidden; }
-    #root { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; font-family:'IBM Plex Sans', sans-serif; }
+    #root { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; font-family:'IBM Plex Sans',sans-serif; }
     .scroll-area { flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:12px 14px 40px; }
     .scroll-area::-webkit-scrollbar { width:3px; }
     .scroll-area::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
@@ -42,13 +31,11 @@
     .tabs { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-shrink:0; }
     .tabs::-webkit-scrollbar { display:none; }
     .tab-btn {
-      background:none; border:none; cursor:pointer;
-      padding:10px 18px; font-family:'IBM Plex Mono',monospace;
-      font-size:10px; letter-spacing:1.5px; font-weight:600;
-      text-transform:uppercase; white-space:nowrap;
-      -webkit-tap-highlight-color:transparent;
-      color:var(--text3); border-bottom:2px solid transparent;
-      transition:color 0.15s, border-color 0.15s;
+      background:none; border:none; cursor:pointer; padding:10px 18px;
+      font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px;
+      font-weight:600; text-transform:uppercase; white-space:nowrap;
+      -webkit-tap-highlight-color:transparent; color:var(--text3);
+      border-bottom:2px solid transparent; transition:color 0.15s, border-color 0.15s;
     }
     .tab-btn.active { color:#fff; border-bottom-color:var(--gold); }
     @keyframes spin { to { transform:rotate(360deg); } }
@@ -60,6 +47,54 @@
       font-weight:600; text-transform:uppercase; color:var(--text3);
       margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);
     }
+    /* Inline expand */
+    .inline-detail { overflow:hidden; max-height:0; opacity:0; transition:max-height 0.4s ease, opacity 0.3s ease; }
+    .inline-detail.open { max-height:1200px; opacity:1; }
+    .detail-inner { padding-top:12px; border-top:1px solid var(--border); margin-top:10px; }
+    .stats-section-title {
+      font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:2px;
+      font-weight:600; color:var(--text3); text-transform:uppercase;
+      margin-bottom:7px; padding-bottom:5px; border-bottom:1px solid var(--border);
+    }
+    /* Linescore */
+    .linescore { width:100%; border-collapse:collapse; font-size:10px; margin-bottom:12px; }
+    .linescore th { font-family:'IBM Plex Mono',monospace; color:var(--text3); font-weight:600; text-align:center; padding:4px 3px; }
+    .linescore td { font-family:'IBM Plex Mono',monospace; color:var(--text2); text-align:center; padding:5px 3px; }
+    .linescore .tlabel { text-align:left; color:#fff; font-weight:700; font-size:9px; }
+    .linescore .rhe { color:var(--gold); font-weight:700; }
+    .linescore tbody tr:nth-child(odd) td { background:rgba(255,255,255,0.02); }
+    /* Performer rows */
+    .performer-row {
+      background:var(--surface2); border:1px solid var(--border); border-radius:7px;
+      padding:7px 10px; display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;
+    }
+    .performer-name { font-size:11px; font-weight:600; color:#fff; }
+    .performer-label { font-size:8px; color:var(--text3); margin-top:1px; font-family:'IBM Plex Mono',monospace; }
+    .performer-stat { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; color:var(--gold); flex-shrink:0; }
+    /* Pitching rows */
+    .pitching-row {
+      background:var(--surface2); border:1px solid var(--border); border-radius:7px;
+      padding:7px 10px; margin-bottom:4px;
+    }
+    .pitcher-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+    .pitcher-name { font-size:11px; font-weight:600; color:#fff; }
+    .pitcher-stats { display:flex; gap:14px; }
+    .pstat-val { font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:700; color:var(--green); }
+    .pstat-lbl { font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--text3); letter-spacing:1px; }
+    .ptag { font-family:'IBM Plex Mono',monospace; font-size:8px; padding:2px 6px; border-radius:3px; font-weight:700; }
+    .ptag.win { background:rgba(62,207,142,0.15); color:var(--green); border:1px solid rgba(62,207,142,0.3); }
+    .ptag.loss { background:rgba(255,96,96,0.15); color:var(--live); border:1px solid rgba(255,96,96,0.3); }
+    /* YouTube button */
+    .yt-btn {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      width:100%; padding:11px; margin-top:10px;
+      background:rgba(255,40,40,0.10); border:1px solid rgba(255,70,70,0.35);
+      border-radius:8px; color:#ff7070; font-family:'IBM Plex Mono',monospace;
+      font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+      text-decoration:none; -webkit-tap-highlight-color:transparent;
+    }
+    /* Tap hint */
+    .tap-hint { font-size:8px; color:var(--text3); text-align:center; margin-top:5px; font-family:'IBM Plex Mono',monospace; letter-spacing:1px; opacity:0.55; }
   </style>
 </head>
 <body>
@@ -111,7 +146,222 @@ function CountDots({ filled, total, color }) {
   );
 }
 
-function GameRow({ game }) {
+// Fetch box score from MLB Stats API
+async function fetchBoxScore(gameId) {
+  try {
+    const [boxRes, linescoreRes] = await Promise.all([
+      fetch(`https://statsapi.mlb.com/api/v1/game/${gameId}/boxscore`),
+      fetch(`https://statsapi.mlb.com/api/v1/game/${gameId}/linescore`)
+    ]);
+    const box = await boxRes.json();
+    const ls = await linescoreRes.json();
+    return { box, ls };
+  } catch(e) { return null; }
+}
+
+function GameDetail({ game }) {
+  const [detail, setDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!game.gameId) { setLoading(false); return; }
+    fetchBoxScore(game.gameId).then(data => {
+      setDetail(data);
+      setLoading(false);
+    });
+  }, [game.gameId]);
+
+  const awayInfo = TEAM_INFO[game.away]||{name:game.away,flag:"🏳️"};
+  const homeInfo = TEAM_INFO[game.home]||{name:game.home,flag:"🏳️"};
+  const awayWin = game.awayScore > game.homeScore;
+
+  // YouTube search URL
+  const ytQuery = encodeURIComponent(`${awayInfo.name} vs ${homeInfo.name} WBC 2026 highlights`);
+  const ytUrl = `https://www.youtube.com/results?search_query=${ytQuery}`;
+
+  if (loading) return (
+    <div style={{textAlign:"center",padding:"16px 0"}}>
+      <div className="spinner" style={{margin:"0 auto"}}/>
+      <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",marginTop:"8px",letterSpacing:"1px"}}>Loading stats…</div>
+    </div>
+  );
+
+  // Parse linescore innings
+  let innings = [];
+  if (detail?.ls?.innings) {
+    innings = detail.ls.innings;
+  }
+
+  // Parse box score for top performers
+  let awayBatters = [], homeBatters = [], awayPitchers = [], homePitchers = [];
+  if (detail?.box) {
+    const parseTeam = (teamData) => {
+      const batters = [];
+      const pitchers = [];
+      if (teamData?.batters) {
+        teamData.batters.forEach(id => {
+          const p = teamData.players?.["ID"+id];
+          if (!p) return;
+          const s = p.stats?.batting;
+          if (!s) return;
+          const hits = s.hits||0, hr=s.homeRuns||0, rbi=s.rbi||0, ab=s.atBats||0;
+          if (ab > 0) batters.push({ name: p.person?.fullName||"", hits, hr, rbi, ab, avg: ab>0?(hits/ab).toFixed(3):"—" });
+        });
+      }
+      if (teamData?.pitchers) {
+        teamData.pitchers.forEach(id => {
+          const p = teamData.players?.["ID"+id];
+          if (!p) return;
+          const s = p.stats?.pitching;
+          if (!s) return;
+          pitchers.push({
+            name: p.person?.fullName||"",
+            ip: s.inningsPitched||"0.0",
+            k: s.strikeOuts||0,
+            er: s.earnedRuns||0,
+            note: p.gameStatus?.isWinner?"win": p.gameStatus?.isLoser?"loss": p.gameStatus?.isSave?"save":""
+          });
+        });
+      }
+      return { batters: batters.sort((a,b)=>(b.hits+b.hr*2+b.rbi)-(a.hits+a.hr*2+a.rbi)).slice(0,3), pitchers };
+    };
+    const away = parseTeam(detail.box.teams?.away);
+    const home = parseTeam(detail.box.teams?.home);
+    awayBatters = away.batters; homeBatters = home.batters;
+    awayPitchers = away.pitchers; homePitchers = home.pitchers;
+  }
+
+  const topBatters = [
+    ...awayBatters.map(b=>({...b, flag:awayInfo.flag, team:awayInfo.name})),
+    ...homeBatters.map(b=>({...b, flag:homeInfo.flag, team:homeInfo.name}))
+  ].sort((a,b)=>(b.hits+b.hr*2+b.rbi)-(a.hits+a.hr*2+a.rbi)).slice(0,4);
+
+  const allPitchers = [
+    ...awayPitchers.map(p=>({...p,flag:awayInfo.flag})),
+    ...homePitchers.map(p=>({...p,flag:homeInfo.flag}))
+  ].filter(p=>p.note==="win"||p.note==="loss"||p.note==="save");
+
+  return (
+    <div>
+      {/* Big score header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"8px",marginBottom:"14px"}}>
+        <div style={{textAlign:"center",flex:1}}>
+          <div style={{fontSize:"24px",marginBottom:"3px"}}>{awayInfo.flag}</div>
+          <div style={{fontSize:"10px",color:"var(--text2)",fontWeight:500}}>{awayInfo.name}</div>
+        </div>
+        <div style={{textAlign:"center",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"28px",fontWeight:700,color:awayWin?"#fff":"#a0b0cc"}}>{game.awayScore}</span>
+            <span style={{color:"var(--text3)",fontSize:"14px"}}>–</span>
+            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"28px",fontWeight:700,color:!awayWin?"#fff":"#a0b0cc"}}>{game.homeScore}</span>
+          </div>
+          <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",letterSpacing:"1px",marginTop:"3px"}}>FINAL</div>
+        </div>
+        <div style={{textAlign:"center",flex:1}}>
+          <div style={{fontSize:"24px",marginBottom:"3px"}}>{homeInfo.flag}</div>
+          <div style={{fontSize:"10px",color:"var(--text2)",fontWeight:500}}>{homeInfo.name}</div>
+        </div>
+      </div>
+
+      {/* Linescore */}
+      {innings.length > 0 && (
+        <div>
+          <div className="stats-section-title">Linescore</div>
+          <div style={{overflowX:"auto",marginBottom:"12px"}}>
+            <table className="linescore">
+              <thead>
+                <tr>
+                  <th></th>
+                  {innings.map((_,i)=><th key={i}>{i+1}</th>)}
+                  <th className="rhe">R</th><th className="rhe">H</th><th className="rhe">E</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="tlabel">{awayInfo.flag} {awayInfo.name}</td>
+                  {innings.map((inn,i)=><td key={i}>{inn.away?.runs ?? "—"}</td>)}
+                  <td className="rhe">{game.awayScore}</td>
+                  <td className="rhe">{detail?.ls?.teams?.away?.hits ?? "—"}</td>
+                  <td className="rhe">{detail?.ls?.teams?.away?.errors ?? "—"}</td>
+                </tr>
+                <tr>
+                  <td className="tlabel">{homeInfo.flag} {homeInfo.name}</td>
+                  {innings.map((inn,i)=><td key={i}>{inn.home?.runs ?? "—"}</td>)}
+                  <td className="rhe">{game.homeScore}</td>
+                  <td className="rhe">{detail?.ls?.teams?.home?.hits ?? "—"}</td>
+                  <td className="rhe">{detail?.ls?.teams?.home?.errors ?? "—"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Top Performers */}
+      {topBatters.length > 0 && (
+        <div>
+          <div className="stats-section-title">Top Performers</div>
+          <div style={{marginBottom:"12px"}}>
+            {topBatters.map((b,i)=>{
+              const parts = [];
+              if (b.hr > 0) parts.push(`${b.hr} HR`);
+              if (b.rbi > 0) parts.push(`${b.rbi} RBI`);
+              const statStr = `${b.hits}-for-${b.ab}${parts.length?", "+parts.join(", "):"" }`;
+              return (
+                <div key={i} className="performer-row">
+                  <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
+                    <span style={{fontSize:"13px"}}>{b.flag}</span>
+                    <div>
+                      <div className="performer-name">{b.name}</div>
+                      <div className="performer-label">{b.team.toUpperCase()}</div>
+                    </div>
+                  </div>
+                  <div className="performer-stat">{statStr}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Pitching */}
+      {allPitchers.length > 0 && (
+        <div>
+          <div className="stats-section-title">Pitching</div>
+          <div style={{marginBottom:"6px"}}>
+            {allPitchers.map((p,i)=>(
+              <div key={i} className="pitching-row">
+                <div className="pitcher-top">
+                  <div className="pitcher-name">{p.flag} {p.name}</div>
+                  {p.note && <span className={`ptag ${p.note}`}>{p.note.toUpperCase()}</span>}
+                </div>
+                <div className="pitcher-stats">
+                  <div><div className="pstat-val">{p.ip}</div><div className="pstat-lbl">IP</div></div>
+                  <div><div className="pstat-val">{p.k}</div><div className="pstat-lbl">K</div></div>
+                  <div><div className="pstat-val">{p.er}</div><div className="pstat-lbl">ER</div></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No data fallback */}
+      {!detail && (
+        <div style={{textAlign:"center",padding:"10px 0",color:"var(--text3)",fontSize:"11px"}}>
+          Detailed stats unavailable for this game.
+        </div>
+      )}
+
+      {/* YouTube Highlights */}
+      <a className="yt-btn" href={ytUrl} target="_blank" rel="noopener noreferrer">
+        ▶️ &nbsp;Watch Highlights on YouTube
+      </a>
+    </div>
+  );
+}
+
+function GameRow({ game, expandedId, setExpandedId }) {
   const away = TEAM_INFO[game.away]||{name:game.away,flag:"🏳️"};
   const home = TEAM_INFO[game.home]||{name:game.home,flag:"🏳️"};
   const isLive = game.status==="live";
@@ -121,33 +371,34 @@ function GameRow({ game }) {
   const homeWin = isFinal && game.homeScore > game.awayScore;
   const ls = game.linescore;
   const inningLabel = ls ? (ls.inningHalf==="Top"?"▲":"▼")+" "+ls.inningOrdinal : "LIVE";
+  const isExpanded = expandedId === game.gameId;
 
   const dtLabel = (() => {
     if (!game.startTime) return {date:"TBD",time:""};
     const d = new Date(game.startTime);
-    return {
-      date: d.toLocaleDateString([],{month:"short"})+" "+d.getDate(),
-      time: d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})
-    };
+    return { date: d.toLocaleDateString([],{month:"short"})+" "+d.getDate(), time: d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}) };
   })();
 
-  // Colors: loser text is dimmer but still legible
-  const awayColor = awayWin ? "#fff" : isFinal ? "#8fa0bf" : "var(--text2)";
-  const homeColor = homeWin ? "#fff" : isFinal ? "#8fa0bf" : "var(--text2)";
-  const awayScoreColor = awayWin ? "#fff" : "#a0b0cc";
-  const homeScoreColor = homeWin ? "#fff" : "#a0b0cc";
+  const awayColor = awayWin?"#fff":isFinal?"#8fa0bf":"var(--text2)";
+  const homeColor = homeWin?"#fff":isFinal?"#8fa0bf":"var(--text2)";
+
+  const handleTap = () => {
+    if (!isFinal) return;
+    setExpandedId(isExpanded ? null : game.gameId);
+  };
 
   return (
     <div style={{
       background:isLive?"var(--live-bg)":"var(--surface)",
-      border:"1px solid "+(isLive?"var(--live-border)":"var(--border)"),
-      borderRadius:"10px",padding:"10px 12px",marginBottom:"5px"
-    }}>
+      border:"1px solid "+(isExpanded?"var(--gold)":isLive?"var(--live-border)":"var(--border)"),
+      borderRadius:"10px",padding:"10px 12px",marginBottom:"5px",
+      cursor:isFinal?"pointer":"default",
+      transition:"border-color 0.15s"
+    }} onClick={handleTap}>
       <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-        {/* Status */}
         <div style={{width:"52px",flexShrink:0,textAlign:"center"}}>
           {isLive && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",fontWeight:700,color:"var(--live)",background:"var(--live-bg)",border:"1px solid var(--live-border)",padding:"2px 5px",borderRadius:"4px"}}>{inningLabel}</span>}
-          {isFinal && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",fontWeight:600,color:"#c8d5ea",letterSpacing:"0.5px"}}>FINAL</span>}
+          {isFinal && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"10px",fontWeight:600,color:"#c8d5ea"}}>FINAL</span>}
           {isUpcoming && (
             <div>
               <div style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",fontWeight:700,color:"var(--gold)",lineHeight:"1.4"}}>{dtLabel.date}</div>
@@ -155,24 +406,25 @@ function GameRow({ game }) {
             </div>
           )}
         </div>
-
-        {/* Away */}
         <div style={{display:"flex",alignItems:"center",gap:"6px",flex:1,minWidth:0}}>
           <span style={{fontSize:"14px",flexShrink:0}}>{away.flag}</span>
           <span style={{fontSize:"13px",fontWeight:awayWin?700:500,color:awayColor,flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{away.name}</span>
-          {game.awayScore!==null && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",color:awayScoreColor,flexShrink:0,minWidth:"22px",textAlign:"right",lineHeight:1}}>{game.awayScore}</span>}
+          {game.awayScore!==null && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",color:awayWin?"#fff":"#c8cedd",flexShrink:0,minWidth:"22px",textAlign:"right",lineHeight:1}}>{game.awayScore}</span>}
         </div>
-
         <span style={{color:"var(--text3)",fontSize:"12px",flexShrink:0}}>–</span>
-
-        {/* Home */}
         <div style={{display:"flex",alignItems:"center",gap:"6px",flex:1,minWidth:0,justifyContent:"flex-end"}}>
-          {game.homeScore!==null && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",color:homeScoreColor,flexShrink:0,minWidth:"22px",textAlign:"left",lineHeight:1}}>{game.homeScore}</span>}
+          {game.homeScore!==null && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"19px",color:homeWin?"#fff":"#c8cedd",flexShrink:0,minWidth:"22px",textAlign:"left",lineHeight:1}}>{game.homeScore}</span>}
           <span style={{fontSize:"13px",fontWeight:homeWin?700:500,color:homeColor,flex:1,textAlign:"right",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{home.name}</span>
           <span style={{fontSize:"14px",flexShrink:0}}>{home.flag}</span>
         </div>
       </div>
 
+      {/* Tap hint for final games */}
+      {isFinal && (
+        <div className="tap-hint">{isExpanded ? "▲ tap to close" : "▼ tap for stats & highlights"}</div>
+      )}
+
+      {/* Live detail */}
       {isLive && ls && (
         <div style={{marginTop:"8px",paddingTop:"8px",borderTop:"1px solid var(--live-border)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"6px"}}>
           <div style={{display:"flex",gap:"14px",alignItems:"center"}}>
@@ -189,16 +441,20 @@ function GameRow({ game }) {
           </div>
         </div>
       )}
+
+      {/* Inline expanded stats */}
+      <div className={`inline-detail ${isExpanded?"open":""}`}>
+        <div className="detail-inner">
+          {isExpanded && <GameDetail game={game}/>}
+        </div>
+      </div>
     </div>
   );
 }
 
 function PoolCard({ pool, records }) {
   const color = pool.color;
-  const sorted = [...pool.teams].sort((a,b)=>{
-    const ra=records[a]||{w:0,l:0}, rb=records[b]||{w:0,l:0};
-    return rb.w-ra.w || ra.l-rb.l;
-  });
+  const sorted = [...pool.teams].sort((a,b)=>{ const ra=records[a]||{w:0,l:0}, rb=records[b]||{w:0,l:0}; return rb.w-ra.w||ra.l-rb.l; });
   return (
     <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:"12px",overflow:"hidden"}}>
       <div style={{padding:"9px 12px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--surface2)"}}>
@@ -208,22 +464,17 @@ function PoolCard({ pool, records }) {
         </div>
         <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)"}}>W–L</span>
       </div>
-      {sorted.map((t,i)=>{
-        const r=records[t]||{w:0,l:0};
-        const info=TEAM_INFO[t]||{name:t,flag:"🏳️"};
-        const isAdv=i<2;
-        return (
-          <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 12px",borderBottom:i<sorted.length-1?"1px solid var(--border)":"none"}}>
-            <div style={{display:"flex",alignItems:"center",gap:"7px",minWidth:0,flex:1}}>
-              <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",flexShrink:0,width:"10px"}}>{i+1}</span>
-              <span style={{fontSize:"13px",flexShrink:0}}>{info.flag}</span>
-              <span style={{fontSize:"12px",fontWeight:isAdv?600:400,color:isAdv?"#fff":"var(--text3)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</span>
-              {isAdv && r.w>0 && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color,border:"1px solid "+color,padding:"1px 4px",borderRadius:"3px",flexShrink:0,opacity:0.9}}>ADV</span>}
-            </div>
-            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"12px",color:r.w>0?color:"var(--text3)",flexShrink:0,marginLeft:"8px"}}>{r.w}–{r.l}</span>
+      {sorted.map((t,i)=>{ const r=records[t]||{w:0,l:0}; const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; const isAdv=i<2; return (
+        <div key={t} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 12px",borderBottom:i<sorted.length-1?"1px solid var(--border)":"none"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"7px",minWidth:0,flex:1}}>
+            <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:"var(--text3)",flexShrink:0,width:"10px"}}>{i+1}</span>
+            <span style={{fontSize:"13px",flexShrink:0}}>{info.flag}</span>
+            <span style={{fontSize:"12px",fontWeight:isAdv?600:400,color:isAdv?"#fff":"var(--text3)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.name}</span>
+            {isAdv && r.w>0 && <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"7px",color,border:"1px solid "+color,padding:"1px 4px",borderRadius:"3px",flexShrink:0,opacity:0.9}}>ADV</span>}
           </div>
-        );
-      })}
+          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontWeight:700,fontSize:"12px",color:r.w>0?color:"var(--text3)",flexShrink:0,marginLeft:"8px"}}>{r.w}–{r.l}</span>
+        </div>
+      );})}
     </div>
   );
 }
@@ -233,6 +484,7 @@ function App() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const intervalRef = useRef(null);
 
   async function fetchScores() {
@@ -256,6 +508,8 @@ function App() {
   const upcomingGames = games.filter(g=>g.status==="upcoming");
   const timeAgo = lastUpdate ? Math.floor((Date.now()-lastUpdate)/1000)+"s" : "–";
   const hasLive = liveGames.length > 0;
+
+  const gameRowProps = { expandedId, setExpandedId };
 
   return (
     <div style={{background:"var(--bg)",height:"100%",display:"flex",flexDirection:"column",color:"var(--text)"}}>
@@ -290,7 +544,7 @@ function App() {
       <div className="scroll-area">
         {activeTab==="standings" && (
           <div>
-            {liveGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>{liveGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>}
+            {liveGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>{liveGames.map((g,i)=><GameRow key={i} game={g} {...gameRowProps}/>)}</div>}
             <div className="section-label">Pool Standings — Top 2 Advance</div>
             <div className="pool-grid">{Object.entries(WBC_TEAMS).map(([key,pool])=><PoolCard key={key} pool={pool} records={records}/>)}</div>
           </div>
@@ -298,9 +552,9 @@ function App() {
 
         {activeTab==="scores" && (
           <div>
-            {liveGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>{liveGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>}
-            {finalGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label">Completed</div>{[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g}/>)}</div>}
-            {upcomingGames.length>0 && <div><div className="section-label">Upcoming</div>{upcomingGames.map((g,i)=><GameRow key={i} game={g}/>)}</div>}
+            {liveGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label" style={{color:"var(--live)"}}>● Live Now</div>{liveGames.map((g,i)=><GameRow key={i} game={g} {...gameRowProps}/>)}</div>}
+            {finalGames.length>0 && <div style={{marginBottom:"16px"}}><div className="section-label">Completed</div>{[...finalGames].reverse().map((g,i)=><GameRow key={i} game={g} {...gameRowProps}/>)}</div>}
+            {upcomingGames.length>0 && <div><div className="section-label">Upcoming</div>{upcomingGames.map((g,i)=><GameRow key={i} game={g} {...gameRowProps}/>)}</div>}
             {games.length===0 && !loading && <div style={{textAlign:"center",marginTop:"60px",color:"var(--text3)",fontSize:"13px"}}>No games found.</div>}
           </div>
         )}
@@ -322,11 +576,7 @@ function App() {
                           <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"9px",color:pool.color,fontWeight:700}}>{r.w}–{r.l}</span>
                         </div>
                       );})}
-                      {sorted.slice(2).map(t=>{ const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; return (
-                        <div key={t} style={{display:"flex",alignItems:"center",gap:"5px",padding:"3px 8px",opacity:0.35}}>
-                          <span style={{fontSize:"10px"}}>{info.flag}</span><span style={{fontSize:"10px",color:"var(--text3)"}}>{info.name}</span>
-                        </div>
-                      );})}
+                      {sorted.slice(2).map(t=>{ const info=TEAM_INFO[t]||{name:t,flag:"🏳️"}; return (<div key={t} style={{display:"flex",alignItems:"center",gap:"5px",padding:"3px 8px",opacity:0.3}}><span style={{fontSize:"10px"}}>{info.flag}</span><span style={{fontSize:"10px",color:"var(--text3)"}}>{info.name}</span></div>);})}
                     </div>
                   );
                 })}
@@ -355,7 +605,7 @@ function App() {
         )}
 
         <div style={{marginTop:"20px",textAlign:"center"}} onClick={fetchScores}>
-          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",letterSpacing:"1px",cursor:"pointer",opacity:0.6}}>AUTO-REFRESHES EVERY 10s · TAP TO REFRESH</span>
+          <span style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:"8px",color:"var(--text3)",letterSpacing:"1px",cursor:"pointer",opacity:0.5}}>AUTO-REFRESHES EVERY 10s · TAP TO REFRESH</span>
         </div>
       </div>
     </div>
